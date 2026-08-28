@@ -1,0 +1,1831 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HSBC Global WealthView</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* =====================================================================
+   HSBC GLOBAL WEALTHVIEW — PROTOTYPE
+   Design tokens:
+   --red        HSBC signature red, used sparingly as the single accent
+   --ink        near-black, primary text / dark surfaces
+   --charcoal   dark UI surface (sidebar, dark cards)
+   --graphite   secondary text on light surfaces
+   --mist       soft grey app background
+   --paper      white surface
+   --line       hairline borders
+   Type: Inter (UI/body) + IBM Plex Mono (figures — a deliberate nod to
+   trading-desk precision; every hard number in the product is set in
+   mono so £ values read as data, not decoration).
+   ===================================================================== */
+:root{
+  --red:#DB0011;
+  --red-dim:#a5000d;
+  --ink:#0A0A0B;
+  --charcoal:#15161A;
+  --charcoal-2:#1D1E23;
+  --graphite:#6B6B72;
+  --mist:#F3F3F5;
+  --mist-2:#EAEAED;
+  --paper:#FFFFFF;
+  --line:#E4E4E8;
+  --green:#0E7D4D;
+  --amber:#B4740E;
+  --shadow-sm: 0 1px 2px rgba(10,10,11,.04), 0 1px 1px rgba(10,10,11,.03);
+  --shadow-md: 0 8px 24px rgba(10,10,11,.08);
+  --shadow-lg: 0 24px 60px rgba(10,10,11,.16);
+  --radius: 18px;
+  --radius-sm: 12px;
+  --ease: cubic-bezier(.2,.7,.2,1);
+}
+*{box-sizing:border-box; margin:0; padding:0;}
+html{scroll-behavior:smooth;}
+body{
+  font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;
+  background:var(--mist);
+  color:var(--ink);
+  -webkit-font-smoothing:antialiased;
+  min-height:100vh;
+  overflow-x:hidden;
+}
+.mono{font-family:'IBM Plex Mono',monospace; letter-spacing:-0.01em;}
+button{font-family:inherit; cursor:pointer; border:none; background:none;}
+a{color:inherit; text-decoration:none;}
+input[type=range]{-webkit-appearance:none; appearance:none;}
+::selection{background:var(--red); color:#fff;}
+:focus-visible{outline:2px solid var(--red); outline-offset:2px;}
+@media (prefers-reduced-motion: reduce){ *{animation-duration:.01ms !important; transition-duration:.01ms !important;} }
+
+/* ---------- layout shell ---------- */
+.app{ display:grid; grid-template-columns:248px 1fr; min-height:100vh; }
+.sidebar{
+  background:var(--charcoal); color:#fff; position:sticky; top:0; height:100vh;
+  display:flex; flex-direction:column; padding:22px 14px; z-index:40;
+}
+.brand{ display:flex; align-items:center; gap:10px; padding:8px 10px 22px; }
+.brand .mark{ width:30px; height:30px; border-radius:8px; background:var(--red); display:flex; align-items:center; justify-content:center; font-weight:800; font-size:14px;}
+.brand .word{ font-weight:700; font-size:14.5px; line-height:1.15; }
+.brand .word span{ display:block; font-size:10px; font-weight:500; color:#9a9aa3; letter-spacing:.04em; }
+.navgroup{ margin-bottom:4px; }
+.navlabel{ font-size:10.5px; text-transform:uppercase; letter-spacing:.08em; color:#7c7c85; padding:16px 12px 6px; }
+.navitem{
+  display:flex; align-items:center; gap:10px; width:100%; text-align:left;
+  padding:9px 12px; border-radius:10px; color:#c7c7cf; font-size:13.5px; font-weight:500;
+  transition:background .15s var(--ease), color .15s var(--ease);
+}
+.navitem .dot{ width:6px; height:6px; border-radius:50%; background:#4d4d56; flex-shrink:0; transition:background .15s;}
+.navitem:hover{ background:#22232a; color:#fff; }
+.navitem.active{ background:#25141a; color:#fff; }
+.navitem.active .dot{ background:var(--red); }
+.sidebar-foot{ margin-top:auto; padding:14px 12px 6px; }
+.aicoach-btn{
+  width:100%; display:flex; align-items:center; gap:10px; padding:12px 14px; border-radius:14px;
+  background:linear-gradient(135deg,var(--red),#8f0009); color:#fff; font-weight:600; font-size:13.5px;
+  box-shadow:0 10px 24px rgba(219,0,17,.28);
+}
+.aicoach-btn:hover{ filter:brightness(1.06); }
+
+.main{ min-width:0; }
+.topbar{
+  position:sticky; top:0; z-index:30; background:rgba(243,243,245,.86); backdrop-filter:blur(14px);
+  border-bottom:1px solid var(--line);
+  display:flex; align-items:center; justify-content:space-between; padding:14px 28px;
+}
+.topbar h1{ font-size:17px; font-weight:700; letter-spacing:-.01em; }
+.topbar .sub{ font-size:12px; color:var(--graphite); font-weight:500; margin-top:1px;}
+.topbar-actions{ display:flex; align-items:center; gap:10px; }
+.pill-select{
+  display:flex; align-items:center; gap:6px; background:var(--paper); border:1px solid var(--line);
+  padding:7px 12px; border-radius:100px; font-size:12.5px; font-weight:600;
+}
+.pill-select select{ border:none; background:none; font:inherit; color:inherit; }
+.iconbtn{
+  width:36px; height:36px; border-radius:50%; background:var(--paper); border:1px solid var(--line);
+  display:flex; align-items:center; justify-content:center; font-size:15px;
+}
+.avatar{ width:36px; height:36px; border-radius:50%; background:var(--ink); color:#fff; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:13px; }
+
+.view{ display:none; padding:26px 28px 120px; max-width:1180px; }
+.view.active{ display:block; animation:fadein .35s var(--ease); }
+@keyframes fadein{ from{ opacity:0; transform:translateY(6px);} to{opacity:1; transform:none;} }
+
+.section-head{ display:flex; align-items:flex-end; justify-content:space-between; margin-bottom:16px; flex-wrap:wrap; gap:10px;}
+.section-head h2{ font-size:21px; font-weight:700; letter-spacing:-.01em; }
+.section-head p{ font-size:13px; color:var(--graphite); margin-top:3px; max-width:520px; }
+.eyebrow{ font-size:11px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:var(--red); margin-bottom:6px; }
+
+/* ---------- cards / grids ---------- */
+.grid{ display:grid; gap:14px; }
+.g-4{ grid-template-columns:repeat(4,1fr); }
+.g-3{ grid-template-columns:repeat(3,1fr); }
+.g-2{ grid-template-columns:repeat(2,1fr); }
+@media (max-width:1000px){ .g-4{grid-template-columns:repeat(2,1fr);} .g-3{grid-template-columns:repeat(2,1fr);} }
+@media (max-width:640px){ .g-4,.g-3,.g-2{grid-template-columns:1fr;} }
+
+.card{ background:var(--paper); border:1px solid var(--line); border-radius:var(--radius); padding:18px; box-shadow:var(--shadow-sm); }
+.card.dark{ background:var(--charcoal); color:#fff; border:none; }
+.card.dark .stat-label{ color:#9a9aa3; }
+.card-title{ font-size:12.5px; font-weight:600; color:var(--graphite); }
+.card.dark .card-title{ color:#9a9aa3; }
+.stat-label{ font-size:12px; font-weight:600; color:var(--graphite); text-transform:uppercase; letter-spacing:.04em; }
+.stat-value{ font-size:26px; font-weight:700; margin-top:6px; letter-spacing:-.02em; }
+.stat-delta{ font-size:12px; font-weight:600; margin-top:6px; }
+.up{ color:var(--green); } .down{ color:var(--red); } .neutral{color:var(--graphite);}
+
+.btn{ display:inline-flex; align-items:center; justify-content:center; gap:7px; padding:11px 18px; border-radius:100px; font-size:13px; font-weight:600; transition:transform .12s var(--ease), filter .12s; white-space:nowrap;}
+.btn:active{ transform:scale(.97); }
+.btn-primary{ background:var(--ink); color:#fff; }
+.btn-primary:hover{ filter:brightness(1.25); }
+.btn-red{ background:var(--red); color:#fff; }
+.btn-red:hover{ filter:brightness(1.08); }
+.btn-ghost{ background:var(--paper); color:var(--ink); border:1px solid var(--line); }
+.btn-ghost:hover{ background:var(--mist-2); }
+.btn-sm{ padding:8px 13px; font-size:12px; }
+.btn-block{ width:100%; }
+
+.badge{ display:inline-flex; align-items:center; padding:3px 9px; border-radius:100px; font-size:10.5px; font-weight:700; letter-spacing:.02em; }
+.badge-info{ background:#EAEEFB; color:#33499C; }
+.badge-ai{ background:#FCEBEC; color:var(--red-dim); }
+
+hr.hair{ border:none; border-top:1px solid var(--line); margin:14px 0; }
+
+/* wealth number banner */
+.hero-banner{
+  background:linear-gradient(160deg,var(--ink) 0%, #24151a 60%, #3a0d13 130%);
+  color:#fff; border-radius:24px; padding:30px 28px; position:relative; overflow:hidden; margin-bottom:16px;
+}
+.hero-banner:before{ content:""; position:absolute; right:-80px; top:-80px; width:280px; height:280px; border-radius:50%; background:radial-gradient(circle,rgba(219,0,17,.35),transparent 70%); }
+.hero-top{ display:flex; justify-content:space-between; align-items:flex-start; gap:20px; flex-wrap:wrap; position:relative; z-index:1;}
+.hero-label{ font-size:12px; font-weight:600; color:#c9c9d1; text-transform:uppercase; letter-spacing:.06em; }
+.hero-value{ font-size:44px; font-weight:700; margin-top:6px; letter-spacing:-.02em; }
+.hero-value small{ font-size:20px; font-weight:600; color:#c9c9d1; }
+.hero-sub-row{ display:flex; gap:26px; margin-top:18px; flex-wrap:wrap; position:relative; z-index:1;}
+.hero-sub-row .item{ min-width:100px; }
+.hero-sub-row .item .l{ font-size:11px; color:#9a9aa3; font-weight:600; text-transform:uppercase; letter-spacing:.04em;}
+.hero-sub-row .item .v{ font-size:18px; font-weight:700; margin-top:3px; }
+
+/* charts */
+.sparkline{ width:100%; height:70px; }
+.barrow{ display:flex; align-items:center; gap:10px; margin:9px 0; }
+.barrow .lbl{ width:132px; font-size:12px; font-weight:600; color:var(--graphite); flex-shrink:0; }
+.barrow .track{ flex:1; height:8px; background:var(--mist-2); border-radius:6px; overflow:hidden; }
+.barrow .fill{ height:100%; border-radius:6px; background:var(--red); transition:width .6s var(--ease); }
+.barrow .val{ width:56px; text-align:right; font-size:12px; font-weight:700; flex-shrink:0; }
+.track{ width:100%; height:8px; background:var(--mist-2); border-radius:6px; overflow:hidden; }
+.track .fill{ height:100%; border-radius:6px; background:var(--red); transition:width .6s var(--ease); }
+
+/* opportunity / list cards */
+.opp-card{ border:1px solid var(--line); border-radius:16px; padding:16px; background:var(--paper); display:flex; flex-direction:column; gap:10px; }
+.opp-card h4{ font-size:14px; font-weight:700; }
+.opp-card p{ font-size:12.5px; color:var(--graphite); line-height:1.5; }
+.opp-actions{ display:flex; gap:8px; flex-wrap:wrap; margin-top:auto; padding-top:4px; }
+
+.holding-row{ display:flex; align-items:center; justify-content:space-between; padding:14px 4px; border-bottom:1px solid var(--line); gap:12px; flex-wrap:wrap;}
+.holding-row:last-child{ border-bottom:none; }
+.holding-left{ display:flex; align-items:center; gap:12px; }
+.holding-icon{ width:40px; height:40px; border-radius:11px; background:var(--mist-2); display:flex; align-items:center; justify-content:center; font-size:16px; flex-shrink:0;}
+.holding-name{ font-size:14px; font-weight:700; }
+.holding-sub{ font-size:11.5px; color:var(--graphite); margin-top:1px; }
+.holding-right{ text-align:right; }
+.holding-value{ font-size:15px; font-weight:700; }
+
+/* adviser cta strip */
+.cta-strip{
+  display:flex; align-items:center; justify-content:space-between; gap:14px; flex-wrap:wrap;
+  background:#FBEEEF; border:1px solid #F3D3D5; border-radius:16px; padding:14px 18px; margin-top:16px;
+}
+.cta-strip .txt{ font-size:13px; font-weight:600; color:#5c1015; }
+.cta-strip .txt small{ display:block; font-weight:500; color:#8a3a3e; font-size:11.5px; margin-top:2px; }
+
+/* sliders */
+.slider-row{ margin:18px 0; }
+.slider-row .top{ display:flex; justify-content:space-between; align-items:baseline; margin-bottom:8px; }
+.slider-row .top .name{ font-size:13px; font-weight:600; }
+.slider-row .top .val{ font-size:14px; font-weight:700; color:var(--red); }
+input[type=range]{ width:100%; height:6px; border-radius:6px; background:var(--mist-2); }
+input[type=range]::-webkit-slider-thumb{ -webkit-appearance:none; width:20px; height:20px; border-radius:50%; background:#fff; border:3px solid var(--red); box-shadow:0 2px 6px rgba(0,0,0,.2); cursor:pointer; margin-top:-7px;}
+input[type=range]::-moz-range-thumb{ width:20px; height:20px; border-radius:50%; background:#fff; border:3px solid var(--red); cursor:pointer; }
+input[type=range]::-webkit-slider-runnable-track{ height:6px; border-radius:6px; background:var(--mist-2); }
+
+/* projection readout */
+.readout-grid{ display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-top:18px; }
+@media (max-width:800px){ .readout-grid{ grid-template-columns:repeat(2,1fr);} }
+.readout{ background:var(--ink); color:#fff; border-radius:14px; padding:15px; }
+.readout .l{ font-size:10.5px; text-transform:uppercase; letter-spacing:.05em; color:#9a9aa3; font-weight:600; }
+.readout .v{ font-size:21px; font-weight:700; margin-top:5px; }
+
+/* tabs */
+.tabbar{ display:flex; gap:6px; background:var(--mist-2); padding:4px; border-radius:100px; width:fit-content; margin-bottom:16px; flex-wrap:wrap;}
+.tabbtn{ padding:8px 15px; border-radius:100px; font-size:12.5px; font-weight:600; color:var(--graphite); }
+.tabbtn.active{ background:var(--paper); color:var(--ink); box-shadow:var(--shadow-sm); }
+
+/* life events */
+.event-chip{ display:flex; flex-direction:column; align-items:flex-start; gap:8px; padding:14px; border-radius:14px; border:1px solid var(--line); background:var(--paper); text-align:left; }
+.event-chip .ic{ font-size:20px; }
+.event-chip .nm{ font-size:12.5px; font-weight:700; }
+.event-chip:hover{ border-color:var(--red); }
+.event-chip.active{ border-color:var(--red); background:#FCEEEF; }
+
+/* comparison */
+.compare-col{ border-radius:18px; padding:18px; }
+.compare-col.a{ background:var(--paper); border:1px solid var(--line); }
+.compare-col.b{ background:var(--ink); color:#fff; }
+.compare-col .metric{ display:flex; justify-content:space-between; padding:9px 0; border-bottom:1px solid rgba(0,0,0,.06); font-size:13px; }
+.compare-col.b .metric{ border-bottom:1px solid rgba(255,255,255,.1); }
+.compare-col .metric span:first-child{ color:var(--graphite); font-weight:500; }
+.compare-col.b .metric span:first-child{ color:#9a9aa3; }
+.compare-col .metric span:last-child{ font-weight:700; font-family:'IBM Plex Mono',monospace; }
+
+/* AI panel */
+.ai-fab{
+  position:fixed; right:26px; bottom:26px; z-index:60; width:58px; height:58px; border-radius:50%;
+  background:linear-gradient(135deg,var(--red),#7d0009); color:#fff; box-shadow:0 14px 34px rgba(219,0,17,.4);
+  display:flex; align-items:center; justify-content:center; font-size:22px;
+}
+.ai-fab:hover{ filter:brightness(1.08); }
+.ai-panel{
+  position:fixed; right:0; top:0; height:100%; width:420px; max-width:94vw; background:var(--paper);
+  box-shadow:var(--shadow-lg); z-index:80; transform:translateX(105%); transition:transform .38s var(--ease);
+  display:flex; flex-direction:column;
+}
+.ai-panel.open{ transform:translateX(0); }
+.ai-head{ padding:18px 20px; border-bottom:1px solid var(--line); display:flex; justify-content:space-between; align-items:center; background:var(--ink); color:#fff; }
+.ai-head h3{ font-size:15px; font-weight:700; }
+.ai-head p{ font-size:11.5px; color:#9a9aa3; margin-top:2px; }
+.ai-body{ flex:1; overflow-y:auto; padding:16px 18px; display:flex; flex-direction:column; gap:12px; }
+.msg{ max-width:88%; padding:11px 14px; border-radius:16px; font-size:13px; line-height:1.5; }
+.msg.user{ align-self:flex-end; background:var(--ink); color:#fff; border-bottom-right-radius:4px; }
+.msg.ai{ align-self:flex-start; background:var(--mist); border-bottom-left-radius:4px; }
+.msg.ai .tag{ display:block; font-size:10px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:var(--red-dim); margin-bottom:5px; }
+.msg .adv-inline{ margin-top:10px; }
+.suggest-row{ display:flex; flex-wrap:wrap; gap:6px; padding:0 18px 12px; }
+.suggest-chip{ font-size:11.5px; font-weight:600; padding:7px 11px; border-radius:100px; background:var(--mist-2); color:var(--graphite); }
+.suggest-chip:hover{ background:var(--mist); color:var(--ink); }
+.ai-input-row{ display:flex; gap:8px; padding:14px 16px; border-top:1px solid var(--line); }
+.ai-input-row input{ flex:1; border:1px solid var(--line); border-radius:100px; padding:11px 16px; font-size:13px; font-family:inherit; }
+.ai-input-row button{ width:42px; height:42px; border-radius:50%; background:var(--red); color:#fff; flex-shrink:0; font-size:15px; }
+
+/* modal / overlay */
+.overlay{ position:fixed; inset:0; background:rgba(10,10,11,.5); backdrop-filter:blur(3px); z-index:90; opacity:0; pointer-events:none; transition:opacity .25s var(--ease); }
+.overlay.open{ opacity:1; pointer-events:auto; }
+.modal{
+  position:fixed; left:50%; top:50%; transform:translate(-50%,-46%); width:520px; max-width:92vw; max-height:86vh; overflow-y:auto;
+  background:var(--paper); border-radius:22px; z-index:95; box-shadow:var(--shadow-lg); opacity:0; pointer-events:none;
+  transition:opacity .25s var(--ease), transform .25s var(--ease); padding:26px;
+}
+.modal.open{ opacity:1; pointer-events:auto; transform:translate(-50%,-50%); }
+.modal-close{ position:absolute; right:18px; top:18px; width:32px; height:32px; border-radius:50%; background:var(--mist-2); font-size:15px; }
+.modal h3{ font-size:19px; font-weight:700; margin-bottom:4px; }
+.modal .sub{ font-size:13px; color:var(--graphite); margin-bottom:18px; }
+.cat-grid{ display:grid; grid-template-columns:repeat(2,1fr); gap:8px; margin:14px 0; }
+.cat-chip{ padding:11px; border-radius:12px; border:1px solid var(--line); font-size:12.5px; font-weight:600; text-align:left; }
+.cat-chip.active{ border-color:var(--red); background:#FCEEEF; color:var(--red-dim); }
+.slot-grid{ display:grid; grid-template-columns:repeat(2,1fr); gap:8px; margin:10px 0 18px; }
+.slot{ padding:10px; border-radius:12px; border:1px solid var(--line); font-size:12.5px; font-weight:600; text-align:center; }
+.slot.active{ border-color:var(--red); background:#FCEEEF; }
+.adviser-card{ display:flex; gap:12px; align-items:center; padding:14px; background:var(--mist); border-radius:14px; margin-bottom:14px; }
+.adviser-card .av{ width:48px; height:48px; border-radius:50%; background:var(--ink); color:#fff; display:flex; align-items:center; justify-content:center; font-weight:700; }
+.adviser-card .nm{ font-size:14px; font-weight:700; }
+.adviser-card .role{ font-size:11.5px; color:var(--graphite); }
+.check-row{ display:flex; align-items:center; gap:10px; padding:9px 0; font-size:13px; font-weight:500; border-bottom:1px solid var(--line); }
+.check-row:last-child{ border:none; }
+.check-row input{ width:17px; height:17px; accent-color:var(--red); }
+
+/* toggle switch */
+.switchrow{ display:flex; justify-content:space-between; align-items:center; padding:13px 0; border-bottom:1px solid var(--line); gap:14px;}
+.switchrow:last-child{ border:none; }
+.switchrow .t{ font-size:13.5px; font-weight:600; }
+.switchrow .d{ font-size:11.5px; color:var(--graphite); margin-top:2px; }
+.switch{ width:42px; height:24px; border-radius:100px; background:var(--mist-2); position:relative; flex-shrink:0; transition:background .2s;}
+.switch.on{ background:var(--green); }
+.switch .knob{ position:absolute; top:3px; left:3px; width:18px; height:18px; border-radius:50%; background:#fff; transition:left .2s var(--ease); box-shadow:0 1px 3px rgba(0,0,0,.3);}
+.switch.on .knob{ left:21px; }
+
+/* toast */
+.toast{ position:fixed; bottom:26px; left:50%; transform:translate(-50%,20px); background:var(--ink); color:#fff; padding:13px 20px; border-radius:100px; font-size:13px; font-weight:600; z-index:120; opacity:0; pointer-events:none; transition:all .3s var(--ease); box-shadow:var(--shadow-lg);}
+.toast.show{ opacity:1; transform:translate(-50%,0); }
+
+/* mobile nav */
+.mobilenav{ display:none; }
+@media (max-width:880px){
+  .app{ grid-template-columns:1fr; }
+  .sidebar{ display:none; }
+  .view{ padding:20px 16px 96px; }
+  .mobilenav{
+    display:flex; position:fixed; bottom:0; left:0; right:0; background:rgba(255,255,255,.92); backdrop-filter:blur(14px);
+    border-top:1px solid var(--line); z-index:70; justify-content:space-around; padding:9px 4px 12px;
+  }
+  .mobilenav button{ display:flex; flex-direction:column; align-items:center; gap:3px; font-size:10.5px; font-weight:600; color:var(--graphite); }
+  .mobilenav button.active{ color:var(--red); }
+  .mobilenav .ic{ font-size:18px; }
+  .ai-fab{ bottom:84px; right:16px; }
+  .readout-grid{ grid-template-columns:repeat(2,1fr); }
+  .hero-value{ font-size:34px; }
+}
+.disclaimer-link{ font-size:11.5px; color:var(--graphite); text-decoration:underline; text-underline-offset:2px; margin-top:10px; display:inline-block; }
+.philosophy{
+  text-align:center; padding:60px 20px; margin-top:10px;
+}
+.philosophy p{ font-family:'IBM Plex Mono',monospace; font-size:14px; color:var(--graphite); line-height:2.1; }
+.philosophy p b{ color:var(--ink); font-weight:600; }
+.footer-mark{ text-align:center; font-size:11px; color:#a9a9b0; padding:30px 0 10px; }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <!-- ================= SIDEBAR ================= -->
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="mark">H</div>
+      <div class="word">Global WealthView<span>HSBC · Concept</span></div>
+    </div>
+    <nav id="desktopNav">
+      <div class="navgroup">
+        <button class="navitem active" data-view="overview"><span class="dot"></span>Overview</button>
+      </div>
+      <div class="navgroup">
+        <div class="navlabel">Everyday Banking</div>
+        <button class="navitem" data-view="paymove"><span class="dot"></span>Pay &amp; Move</button>
+        <button class="navitem" data-view="trends"><span class="dot"></span>Money Trends</button>
+        <button class="navitem" data-view="pots"><span class="dot"></span>Savings Pots</button>
+        <button class="navitem" data-view="cardshub"><span class="dot"></span>Cards</button>
+      </div>
+      <div class="navgroup">
+        <div class="navlabel">Wealth</div>
+        <button class="navitem" data-view="global"><span class="dot"></span>Global Wealth</button>
+        <button class="navitem" data-view="investments"><span class="dot"></span>Investments</button>
+        <button class="navitem" data-view="mortgage"><span class="dot"></span>Mortgage</button>
+        <button class="navitem" data-view="retirement"><span class="dot"></span>Retirement</button>
+        <button class="navitem" data-view="goals"><span class="dot"></span>Life Events</button>
+      </div>
+      <div class="navgroup">
+        <div class="navlabel">Intelligence</div>
+        <button class="navitem" data-view="behaviour"><span class="dot"></span>Financial Behaviour</button>
+        <button class="navitem" data-view="fees"><span class="dot"></span>Fees &amp; Costs</button>
+        <button class="navitem" data-view="twin"><span class="dot"></span>Financial Twin</button>
+        <button class="navitem" data-view="compare"><span class="dot"></span>Comparisons</button>
+        <button class="navitem" data-view="insights"><span class="dot"></span>Insights</button>
+      </div>
+      <div class="navgroup">
+        <div class="navlabel">Household</div>
+        <button class="navitem" data-view="family"><span class="dot"></span>Family Wealth</button>
+        <button class="navitem" data-view="documents"><span class="dot"></span>Documents</button>
+        <button class="navitem" data-view="security"><span class="dot"></span>Security</button>
+      </div>
+    </nav>
+    <div class="sidebar-foot">
+      <button class="aicoach-btn" id="openAiBtnSidebar">✦ AI Wealth Coach</button>
+    </div>
+  </aside>
+
+  <!-- ================= MAIN ================= -->
+  <main class="main">
+    <div class="topbar">
+      <div>
+        <h1 id="viewTitle">Overview</h1>
+        <div class="sub">Good evening, Alex · Your position as of today</div>
+      </div>
+      <div class="topbar-actions">
+        <button class="iconbtn" title="Hide balances" id="hideBalanceBtn" onclick="toggleHideBalance()">👁️</button>
+        <div class="pill-select">🌐
+          <select id="currencySelect">
+            <option value="GBP">GBP £</option>
+            <option value="USD">USD $</option>
+            <option value="EUR">EUR €</option>
+            <option value="INR">INR ₹</option>
+            <option value="AED">AED د.إ</option>
+            <option value="SGD">SGD $</option>
+            <option value="HKD">HKD $</option>
+          </select>
+        </div>
+        <button class="iconbtn" title="Security" onclick="showView('security')">🔒</button>
+        <div class="avatar">AR</div>
+      </div>
+    </div>
+
+    <!-- ============ 2. OVERVIEW ============ -->
+    <section class="view active" id="view-overview">
+      <div class="hero-banner">
+        <div class="hero-top">
+          <div>
+            <div class="hero-label">Total Wealth</div>
+            <div class="hero-value mono curr" data-gbp="482640">£482,640</div>
+          </div>
+          <div style="text-align:right">
+            <div class="hero-label">Financial Health</div>
+            <div class="hero-value" style="font-size:30px">84<small>/100</small></div>
+          </div>
+        </div>
+        <p style="max-width:520px; font-size:13px; color:#d7d7dd; margin-top:10px; position:relative; z-index:1;">Your financial position is strong. HSBC AI has identified <b style="color:#fff">7 areas</b> you may want to explore — informational only, not a recommendation.</p>
+        <div class="hero-sub-row">
+          <div class="item"><div class="l">Net Worth</div><div class="v mono curr" data-gbp="421300">£421,300</div></div>
+          <div class="item"><div class="l">Investments</div><div class="v mono curr" data-gbp="293000">£293,000</div></div>
+          <div class="item"><div class="l">Pension</div><div class="v mono curr" data-gbp="186200">£186,200</div></div>
+          <div class="item"><div class="l">Savings</div><div class="v mono curr" data-gbp="93600">£93,600</div></div>
+          <div class="item"><div class="l">Debt</div><div class="v mono curr" data-gbp="61340">£61,340</div></div>
+          <div class="item"><div class="l">Monthly investing</div><div class="v mono curr" data-gbp="2000">£2,000</div></div>
+        </div>
+        <div style="margin-top:20px; position:relative; z-index:1; display:flex; gap:10px; flex-wrap:wrap;">
+          <button class="btn btn-red" onclick="showView('insights')">See my opportunities</button>
+          <button class="btn btn-ghost" style="background:rgba(255,255,255,.08); border-color:rgba(255,255,255,.18); color:#fff;" onclick="openAdviser()">Speak to an HSBC adviser</button>
+        </div>
+      </div>
+
+      <div class="card-title" style="margin-bottom:8px;">Your quick links <span style="font-weight:500; color:var(--graphite); text-transform:none;">· personalise from Library</span></div>
+      <div class="grid g-4" style="margin-bottom:14px;">
+        <button class="opp-card" style="align-items:center; flex-direction:row; gap:12px; padding:14px;" onclick="showView('paymove')"><span style="font-size:20px;">💸</span><span style="font-weight:700; font-size:13px;">Pay a person</span></button>
+        <button class="opp-card" style="align-items:center; flex-direction:row; gap:12px; padding:14px;" onclick="showView('trends')"><span style="font-size:20px;">📉</span><span style="font-weight:700; font-size:13px;">Balance forecast</span></button>
+        <button class="opp-card" style="align-items:center; flex-direction:row; gap:12px; padding:14px;" onclick="showView('pots')"><span style="font-size:20px;">🫙</span><span style="font-weight:700; font-size:13px;">Savings Pots</span></button>
+        <button class="opp-card" style="align-items:center; flex-direction:row; gap:12px; padding:14px;" onclick="showView('cardshub')"><span style="font-size:20px;">🧊</span><span style="font-weight:700; font-size:13px;">Freeze a card</span></button>
+      </div>
+
+      <div class="grid g-4">
+        <div class="card">
+          <div class="stat-label">Wealth growth (5y)</div>
+          <svg class="sparkline" id="spark-wealth"></svg>
+        </div>
+        <div class="card">
+          <div class="stat-label">Investment performance</div>
+          <div class="stat-value up">+9.8%</div>
+          <div class="stat-delta neutral">Blended, last 12 months</div>
+        </div>
+        <div class="card">
+          <div class="stat-label">Retirement progress</div>
+          <div class="stat-value">73%</div>
+          <div class="stat-delta up">On track for age 57</div>
+        </div>
+        <div class="card">
+          <div class="stat-label">Monthly cash flow</div>
+          <div class="stat-value up curr" data-gbp="1140">+£1,140</div>
+          <div class="stat-delta neutral">After spending &amp; investing</div>
+        </div>
+      </div>
+
+      <div class="grid g-2" style="margin-top:14px;">
+        <div class="card">
+          <div class="card-title" style="margin-bottom:10px;">Asset allocation</div>
+          <div id="alloc-asset"></div>
+        </div>
+        <div class="card">
+          <div class="card-title" style="margin-bottom:10px;">Cash vs invested</div>
+          <div id="alloc-cash"></div>
+        </div>
+      </div>
+
+      <div class="section-head" style="margin-top:24px;">
+        <div><h2>HSBC AI found 7 areas you may want to explore</h2><p>Illustrative, based on the assumptions shown. Not a personalised recommendation.</p></div>
+      </div>
+      <div class="grid g-3">
+        <div class="opp-card"><h4 class="mono">£4,820</h4><p>Potential annual cost difference under a lower-cost scenario.</p></div>
+        <div class="opp-card"><h4 class="mono">£76,000</h4><p>Potential additional 10-year projected wealth under alternative assumptions.</p></div>
+        <div class="opp-card"><h4 class="mono">1.4 yrs</h4><p>Potential retirement date improvement under alternative assumptions.</p></div>
+      </div>
+      <button class="btn btn-primary" style="margin-top:14px;" onclick="showView('insights')">See my opportunities →</button>
+
+      <div class="philosophy">
+        <p>Don't just show customers their money.<br><b>Help them understand it.</b> Help them explore it. Help them plan it.<br>And when they want advice, connect them to a human.</p>
+      </div>
+    </section>
+
+    <!-- ============ PAY & MOVE ============ -->
+    <section class="view" id="view-paymove">
+      <div class="section-head"><div><h2>Pay &amp; Move</h2><p>Send money, pay bills, and manage what leaves your account — mirrors HSBC UK's Pay &amp; transfer hub.</p></div></div>
+      <div class="grid g-4">
+        <button class="opp-card" style="align-items:flex-start;" onclick="toast('Pay a person flow opened (simulated).')"><span style="font-size:22px;">👤</span><h4>Pay a person</h4><p>Send to family or friends using account details or mobile number.</p></button>
+        <button class="opp-card" style="align-items:flex-start;" onclick="toast('Transfer flow opened (simulated).')"><span style="font-size:22px;">🔁</span><h4>Transfer to myself</h4><p>Move money instantly between your own linked accounts.</p></button>
+        <button class="opp-card" style="align-items:flex-start;" onclick="toast('Bill payment flow opened (simulated).')"><span style="font-size:22px;">🧾</span><h4>Pay a bill</h4><p>Pre-populated bank details for hundreds of major billers.</p></button>
+        <button class="opp-card" style="align-items:flex-start;" onclick="toast('Camera opened — scan the front and back of your cheque (simulated).')"><span style="font-size:22px;">📷</span><h4>Pay in a cheque</h4><p>Up to £2,000/day — scan front and back, no branch needed.</p></button>
+      </div>
+
+      <div class="section-head" style="margin-top:22px;"><div><h2 style="font-size:16px;">International &amp; global transfers</h2><p>Send to over 200 countries, or move between your linked HSBC global accounts.</p></div><button class="btn btn-ghost btn-sm" onclick="toast('International transfer flow opened (simulated).')">Send internationally</button></div>
+
+      <div class="section-head" style="margin-top:22px;"><div><h2 style="font-size:16px;">Recent payees</h2></div></div>
+      <div class="card" id="payeesList"></div>
+
+      <div class="section-head" style="margin-top:22px;"><div><h2 style="font-size:16px;">Standing orders &amp; Direct Debits</h2><p>View, cancel, or manage recurring payments — HSBC UK's Balance bill manager.</p></div></div>
+      <div class="card" id="recurringList"></div>
+    </section>
+
+    <!-- ============ MONEY TRENDS ============ -->
+    <section class="view" id="view-trends">
+      <div class="section-head"><div><h2>Money Trends</h2><p>Spending insights and balance forecast — see what's left before payday.</p></div></div>
+      <div class="grid g-3">
+        <div class="card dark">
+          <div class="stat-label">Predicted balance, 28 Aug</div>
+          <div class="stat-value mono curr" data-gbp="1860">£1,860</div>
+          <div class="stat-delta neutral" style="color:#c9c9d1;">After known bills &amp; regular spending</div>
+        </div>
+        <div class="card"><div class="stat-label">Spent this month</div><div class="stat-value mono curr" data-gbp="2140">£2,140</div><div class="stat-delta down">↑ 11% vs last month</div></div>
+        <div class="card"><div class="stat-label">Left to spend safely</div><div class="stat-value mono curr" data-gbp="640">£640</div><div class="stat-delta neutral">Until your next payday</div></div>
+      </div>
+      <div class="card" style="margin-top:14px;">
+        <div class="card-title" style="margin-bottom:10px;">Balance forecast — next 30 days</div>
+        <svg class="sparkline" id="spark-forecast" style="height:90px;"></svg>
+      </div>
+      <div class="card" style="margin-top:14px;">
+        <div class="card-title" style="margin-bottom:10px;">Spending insights by category</div>
+        <div id="spendCategories"></div>
+      </div>
+    </section>
+
+    <!-- ============ SAVINGS POTS ============ -->
+    <section class="view" id="view-pots">
+      <div class="section-head"><div><h2>Savings Pots</h2><p>Set money aside for something specific — HSBC UK's goal-based savings pots.</p></div><button class="btn btn-red" onclick="openCreatePot()">+ Create a pot</button></div>
+      <div class="grid g-3" id="potsGrid"></div>
+      <p style="font-size:11.5px; color:var(--graphite); margin-top:14px;">Moving money into a pot is manual today. Automatic round-ups and scheduled transfers into pots are coming in a future update.</p>
+    </section>
+
+    <!-- ============ CARDS ============ -->
+    <section class="view" id="view-cardshub">
+      <div class="section-head"><div><h2>Cards</h2><p>Freeze a card, view your PIN, or set spending controls.</p></div></div>
+      <div id="cardsList"></div>
+    </section>
+
+    <!-- ============ 3. GLOBAL WEALTH ============ -->
+    <section class="view" id="view-global">
+      <div class="section-head"><div><h2>Global Wealth View</h2><p>Your financial position across every country and currency you hold assets in.</p></div></div>
+      <div class="grid g-3" id="countryGrid"></div>
+      <div class="card" style="margin-top:14px;">
+        <div class="card-title" style="margin-bottom:10px;">Currency conversion (mock rates, base GBP)</div>
+        <div class="grid g-4" id="fxGrid"></div>
+      </div>
+    </section>
+
+    <!-- ============ 4. INVESTMENTS ============ -->
+    <section class="view" id="view-investments">
+      <div class="section-head"><div><h2>Everything you own</h2><p>Every account you've connected, in one place. Add any fund manually, or extract it from another app.</p></div>
+        <div style="display:flex; gap:8px; flex-wrap:wrap;">
+          <button class="btn btn-ghost" onclick="openConnectApp()">🔗 Extract from another app</button>
+          <button class="btn btn-red" onclick="openAddFund('investment')">+ Add a fund</button>
+        </div>
+      </div>
+      <div class="card" id="holdingsList"></div>
+      <div class="card" style="margin-top:14px;">
+        <div class="card-title">Data permissions</div>
+        <p style="font-size:12.5px; color:var(--graphite); margin-top:6px; max-width:480px;">Your connected financial information is used to create your financial overview and insights.</p>
+        <button class="btn btn-ghost btn-sm" style="margin-top:10px;" onclick="showView('security')">Manage permissions</button>
+      </div>
+    </section>
+
+    <!-- ============ 5. RETIREMENT ============ -->
+    <section class="view" id="view-retirement">
+      <div class="section-head"><div><h2>Retirement Planner</h2><p>Illustrative projections based on the assumptions selected.</p></div></div>
+      <div class="grid g-4">
+        <div class="card"><div class="stat-label">Current age</div><div class="stat-value">43</div></div>
+        <div class="card"><div class="stat-label">Current retirement assets</div><div class="stat-value mono curr" data-gbp="293000">£293,000</div></div>
+        <div class="card"><div class="stat-label">Target wealth</div><div class="stat-value mono">£1.2M</div></div>
+        <div class="card"><div class="stat-label">Monthly contribution</div><div class="stat-value mono curr" data-gbp="2000">£2,000</div></div>
+      </div>
+      <div class="card" style="margin-top:14px;">
+        <div class="card-title">Return scenario</div>
+        <div style="display:flex; gap:8px; margin-top:10px; flex-wrap:wrap;">
+          <button class="btn btn-ghost btn-sm ret-scn" data-r="5">5% return</button>
+          <button class="btn btn-ghost btn-sm ret-scn" data-r="7">7% return</button>
+          <button class="btn btn-ghost btn-sm ret-scn" data-r="9">9% return</button>
+        </div>
+        <div class="readout-grid">
+          <div class="readout"><div class="l">Projected retirement age</div><div class="v" id="ret-age">57</div></div>
+          <div class="readout"><div class="l">Projected income / year</div><div class="v mono">£48,000</div></div>
+          <div class="readout"><div class="l">Inflation assumption</div><div class="v">2.5%</div></div>
+          <div class="readout"><div class="l">Probability at 57</div><div class="v" id="ret-prob">84%</div></div>
+        </div>
+        <div class="card-title" style="margin-top:20px;">Probability of reaching target wealth</div>
+        <div id="prob-chart" style="margin-top:8px;"></div>
+        <p style="font-size:11.5px; color:var(--graphite); margin-top:12px;">These figures are illustrative projections based on the assumptions selected and are not guarantees. <a class="disclaimer-link" onclick="openDisclaimer()">About this projection</a></p>
+      </div>
+      <div class="cta-strip">
+        <div class="txt">Your retirement plan is personal.<small>An HSBC adviser can help you think through your options.</small></div>
+        <button class="btn btn-red" onclick="openAdviser('Pension & Retirement')">Speak to an HSBC adviser</button>
+      </div>
+    </section>
+
+    <!-- ============ MORTGAGE ============ -->
+    <section class="view" id="view-mortgage">
+      <div class="section-head"><div><h2>Mortgage &amp; Borrowing</h2><p>Your mortgage, in context with the rest of your finances.</p></div></div>
+      <div class="grid g-4">
+        <div class="card"><div class="stat-label">Outstanding balance</div><div class="stat-value mono curr" data-gbp="312400">£312,400</div></div>
+        <div class="card"><div class="stat-label">Property value</div><div class="stat-value mono curr" data-gbp="540000">£540,000</div></div>
+        <div class="card"><div class="stat-label">Current rate</div><div class="stat-value">4.29%</div><div class="stat-delta neutral">2-year fixed · 14 months remaining</div></div>
+        <div class="card"><div class="stat-label">Monthly payment</div><div class="stat-value mono curr" data-gbp="1780">£1,780</div></div>
+      </div>
+      <div class="grid g-2" style="margin-top:14px;">
+        <div class="card"><div class="stat-label">Loan-to-value</div><div class="stat-value">57.9%</div><div class="stat-delta neutral">Based on connected property value</div></div>
+        <div class="card"><div class="stat-label">Term remaining</div><div class="stat-value">19 years</div><div class="stat-delta neutral">Original term 25 years</div></div>
+      </div>
+
+      <div class="card" style="margin-top:14px;">
+        <div class="card-title" style="margin-bottom:10px;">Projected balance over remaining term</div>
+        <svg class="sparkline" id="spark-mortgage" style="height:100px;"></svg>
+      </div>
+
+      <div class="card" style="margin-top:14px;">
+        <div class="card-title">When your fix ends</div>
+        <p style="font-size:12.5px; color:var(--graphite); margin-top:4px;">Illustrative rates for comparison. Not an offer or personalised recommendation.</p>
+        <div style="display:flex; gap:8px; margin-top:10px; flex-wrap:wrap;">
+          <button class="btn btn-ghost btn-sm mort-scn" data-r="3.9">2-yr fixed · 3.9%</button>
+          <button class="btn btn-ghost btn-sm mort-scn" data-r="4.2">5-yr fixed · 4.2%</button>
+          <button class="btn btn-ghost btn-sm mort-scn" data-r="4.6">Tracker · 4.6%</button>
+        </div>
+        <div class="readout-grid">
+          <div class="readout"><div class="l">New monthly payment</div><div class="v mono" id="mort-payment">£1,780</div></div>
+          <div class="readout"><div class="l">Change vs current</div><div class="v mono" id="mort-change">£0</div></div>
+          <div class="readout"><div class="l">Illustrative interest over term</div><div class="v mono" id="mort-interest">£128,400</div></div>
+          <div class="readout"><div class="l">Payoff age</div><div class="v" id="mort-payoff-age">62</div></div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top:14px;">
+        <div class="slider-row" style="margin:0;">
+          <div class="top"><span class="name">Monthly overpayment</span><span class="val mono" id="v-overpay">£0</span></div>
+          <input type="range" id="s-overpay" min="0" max="1500" value="0" step="50">
+        </div>
+        <div class="readout-grid">
+          <div class="readout"><div class="l">Revised payoff term</div><div class="v" id="overpay-term">19 yrs</div></div>
+          <div class="readout"><div class="l">Illustrative interest saved</div><div class="v mono" id="overpay-saved">£0</div></div>
+        </div>
+        <p style="font-size:11.5px; color:var(--graphite); margin-top:12px;">Illustrative projection based on the assumptions shown. Not a guarantee. <a class="disclaimer-link" onclick="openDisclaimer()">About this projection</a></p>
+      </div>
+
+      <div class="cta-strip">
+        <div class="txt">Thinking about your next fix, or a bigger move?<small>Talk it through with a human adviser.</small></div>
+        <button class="btn btn-red" onclick="openAdviser('Mortgage & Borrowing')">Speak to an HSBC adviser</button>
+      </div>
+    </section>
+
+    <!-- ============ 6. LIFE EVENTS ============ -->
+    <section class="view" id="view-goals">
+      <div class="section-head"><div><h2>Life Event Simulator</h2><p>See how a major life decision could change your projected retirement.</p></div></div>
+      <div class="grid g-4" id="eventGrid"></div>
+      <div class="card" id="eventResult" style="margin-top:16px; display:none;"></div>
+      <div class="cta-strip"><div class="txt">Want to discuss your options?<small>Talk it through with a human adviser.</small></div><button class="btn btn-red" onclick="openAdviser('Other')">Speak to an HSBC adviser</button></div>
+    </section>
+
+    <!-- ============ 7. BEHAVIOUR ============ -->
+    <section class="view" id="view-behaviour">
+      <div class="section-head"><div><h2>Your Financial Behaviour</h2><p>Insights generated from the financial information you've chosen to connect.</p></div></div>
+      <div class="grid g-2">
+        <div class="card">
+          <div class="card-title" style="margin-bottom:10px;">Savings rate over time</div>
+          <svg class="sparkline" id="spark-savings"></svg>
+        </div>
+        <div class="card">
+          <div class="card-title" style="margin-bottom:10px;">Lifestyle spending over time</div>
+          <svg class="sparkline" id="spark-spend"></svg>
+        </div>
+      </div>
+      <div class="card" style="margin-top:14px;">
+        <div class="card-title" style="margin-bottom:10px;">Observations</div>
+        <ul style="font-size:13px; line-height:2.1; color:var(--ink); padding-left:18px;">
+          <li>You save most aggressively during the first week after payday.</li>
+          <li>Your savings rate changed from 22% to 16% over the last 12 months.</li>
+          <li>Your investment contributions have remained consistent for 9 months.</li>
+          <li>Your cash balance has increased by 14% this year.</li>
+          <li>Your lifestyle spending increased 11% after your salary increase.</li>
+        </ul>
+      </div>
+      <p style="font-size:11.5px; color:var(--graphite); margin-top:12px;">These insights are generated from the financial information you have chosen to connect.</p>
+      <button class="btn btn-ghost btn-sm" style="margin-top:8px;" onclick="showView('security')">Manage data permissions</button>
+    </section>
+
+    <!-- ============ 8. FEES ============ -->
+    <section class="view" id="view-fees">
+      <div class="section-head"><div><h2>How Much Are You Paying?</h2><p>A transparent breakdown of your estimated investment costs.</p></div></div>
+      <div class="grid g-2">
+        <div class="card">
+          <div class="stat-label">Estimated annual investment costs</div>
+          <div class="stat-value mono curr" data-gbp="2840">£2,840</div>
+          <div class="stat-delta neutral">0.82% per year</div>
+          <hr class="hair">
+          <div class="barrow"><div class="lbl">Fund management</div><div class="track"><div class="fill" style="width:50%"></div></div><div class="val mono">£1,420</div></div>
+          <div class="barrow"><div class="lbl">Platform fees</div><div class="track"><div class="fill" style="width:17%"></div></div><div class="val mono">£480</div></div>
+          <div class="barrow"><div class="lbl">Transaction costs</div><div class="track"><div class="fill" style="width:11%"></div></div><div class="val mono">£320</div></div>
+          <div class="barrow"><div class="lbl">FX costs</div><div class="track"><div class="fill" style="width:7%"></div></div><div class="val mono">£210</div></div>
+          <div class="barrow"><div class="lbl">Advisory costs</div><div class="track"><div class="fill" style="width:14%"></div></div><div class="val mono">£410</div></div>
+        </div>
+        <div class="card">
+          <div class="stat-label">Illustrative comparison</div>
+          <div style="display:flex; gap:22px; margin-top:8px;">
+            <div><div class="stat-label">Your rate</div><div class="stat-value">0.82%</div></div>
+            <div><div class="stat-label">Lower-cost scenario</div><div class="stat-value">0.48%</div></div>
+          </div>
+          <div class="stat-delta neutral" style="margin-top:6px;">Illustrative annual difference: <b class="mono">£1,180</b></div>
+          <button class="btn btn-primary btn-block" style="margin-top:14px;" id="see10yrBtn">See 10-year impact</button>
+          <div id="tenYearImpact" style="display:none; margin-top:14px;">
+            <svg class="sparkline" id="spark-fees" style="height:110px;"></svg>
+            <p style="font-size:11.5px; color:var(--graphite); margin-top:8px;">Illustrative projection based on the assumptions shown. Compounded annually on your current invested balance.</p>
+          </div>
+        </div>
+      </div>
+      <div class="cta-strip"><div class="txt">Want help understanding these costs?<small>Not a recommendation to switch products.</small></div><button class="btn btn-red" onclick="openAdviser('Fees & Charges')">Speak to an HSBC adviser</button></div>
+    </section>
+
+    <!-- ============ 9. FINANCIAL TWIN / WHAT-IF ============ -->
+    <section class="view" id="view-twin">
+      <div class="section-head"><div><h2>Financial Twin — What If?</h2><p>A dynamic simulation of your financial future based on the assumptions you choose. This is illustrative, not a prediction or financial advice.</p></div></div>
+      <div class="grid" style="grid-template-columns:1.1fr 1fr; gap:16px;">
+        <div class="card">
+          <div class="slider-row"><div class="top"><span class="name">Expected annual return</span><span class="val" id="v-return">7%</span></div><input type="range" id="s-return" min="3" max="10" value="7" step="0.5"></div>
+          <div class="slider-row"><div class="top"><span class="name">Monthly investment</span><span class="val mono" id="v-invest">£2,000</span></div><input type="range" id="s-invest" min="500" max="10000" value="2000" step="100"></div>
+          <div class="slider-row"><div class="top"><span class="name">Retirement age</span><span class="val" id="v-age">57</span></div><input type="range" id="s-age" min="45" max="70" value="57" step="1"></div>
+          <div class="slider-row"><div class="top"><span class="name">Inflation</span><span class="val" id="v-inflation">2.5%</span></div><input type="range" id="s-inflation" min="1" max="8" value="2.5" step="0.5"></div>
+          <div class="slider-row"><div class="top"><span class="name">Salary growth</span><span class="val" id="v-salary">3%</span></div><input type="range" id="s-salary" min="0" max="10" value="3" step="0.5"></div>
+          <div class="slider-row"><div class="top"><span class="name">Monthly spending</span><span class="val mono" id="v-spend">£3,400</span></div><input type="range" id="s-spend" min="1500" max="8000" value="3400" step="100"></div>
+        </div>
+        <div>
+          <div class="readout-grid" style="grid-template-columns:1fr 1fr;">
+            <div class="readout"><div class="l">Projected net worth</div><div class="v mono" id="tw-networth">£1.24M</div></div>
+            <div class="readout"><div class="l">Projected investment value</div><div class="v mono" id="tw-invval">£860K</div></div>
+            <div class="readout"><div class="l">Projected retirement age</div><div class="v" id="tw-age">57</div></div>
+            <div class="readout"><div class="l">Target probability</div><div class="v" id="tw-prob">84%</div></div>
+          </div>
+          <div class="card" style="margin-top:12px;">
+            <div class="card-title" style="margin-bottom:8px;">Projected wealth curve</div>
+            <svg class="sparkline" id="spark-twin" style="height:130px;"></svg>
+          </div>
+        </div>
+      </div>
+      <p style="font-size:11.5px; color:var(--graphite); margin-top:10px;"><a class="disclaimer-link" onclick="openDisclaimer()">About this projection</a></p>
+    </section>
+
+    <!-- ============ 10. COMPARISONS ============ -->
+    <section class="view" id="view-compare">
+      <div class="section-head"><div><h2>Comparison Engine</h2><p>Compare your current portfolio against an alternative scenario. This is a comparison tool, not an automated recommendation.</p></div></div>
+      <div class="grid g-2">
+        <div class="compare-col a">
+          <div class="eyebrow">Current portfolio</div>
+          <div class="stat-value mono curr" data-gbp="482640">£482,640</div>
+          <div class="metric"><span>Historical performance</span><span>7.0%</span></div>
+          <div class="metric"><span>Estimated annual costs</span><span>0.82%</span></div>
+          <div class="metric"><span>Equity exposure</span><span>68%</span></div>
+          <div class="metric"><span>Volatility (est.)</span><span>Medium</span></div>
+          <div class="metric"><span>Liquidity</span><span>High</span></div>
+        </div>
+        <div class="compare-col b">
+          <div class="eyebrow" style="color:#ff8a90;">Scenario B</div>
+          <div class="stat-value mono" id="cmp-value">£521,400</div>
+          <div class="metric"><span>Illustrative return assumption</span><span id="cmp-return">7.4%</span></div>
+          <div class="metric"><span>Estimated annual costs</span><span>0.48%</span></div>
+          <div class="metric"><span>Equity exposure</span><span>62%</span></div>
+          <div class="metric"><span>Volatility (est.)</span><span>Medium</span></div>
+          <div class="metric"><span>Liquidity</span><span>High</span></div>
+        </div>
+      </div>
+      <div class="card" style="margin-top:12px;">
+        <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;">
+          <div><div class="stat-label">Illustrative difference over 10 years</div><div class="stat-value up" id="cmp-diff">+£38,760</div></div>
+          <input type="range" id="cmp-slider" min="0" max="10" value="4" style="max-width:220px;">
+        </div>
+        <p style="font-size:12px; color:var(--graphite); margin-top:8px;">Scenario B produces a higher projected value under the assumptions selected.</p>
+      </div>
+      <div class="cta-strip"><div class="txt">Want to understand which option may be appropriate for your circumstances?</div><button class="btn btn-red" onclick="openAdviser('Investments')">Speak to an HSBC adviser</button></div>
+    </section>
+
+    <!-- ============ 11. INSIGHTS (opportunity engine + leakage + alerts) ============ -->
+    <section class="view" id="view-insights">
+      <div class="section-head"><div><h2>Insights</h2><p>Opportunities, leakage and alerts — informational only.</p></div></div>
+
+      <div class="card-title" style="margin-bottom:10px;">Areas you may want to explore</div>
+      <div class="grid g-3" id="oppGrid"></div>
+
+      <div class="section-head" style="margin-top:26px;"><div><h2 style="font-size:17px;">Where could your money be going?</h2></div></div>
+      <div class="card" id="leakageList"></div>
+
+      <div class="section-head" style="margin-top:26px;"><div><h2 style="font-size:17px;">Smart alerts</h2></div></div>
+      <div class="card" id="alertsList"></div>
+    </section>
+
+    <!-- ============ 12. FAMILY WEALTH ============ -->
+    <section class="view" id="view-family">
+      <div class="section-head"><div><h2>Family Wealth</h2><p>Partner's financial information is visible with their permission — see the bigger household picture.</p></div><button class="btn btn-ghost btn-sm" onclick="showView('security')">Manage permissions</button></div>
+      <div class="grid g-4">
+        <div class="card"><div class="stat-label">Your wealth</div><div class="stat-value mono curr" data-gbp="482640">£482,640</div></div>
+        <div class="card"><div class="stat-label">Partner's wealth</div><div class="stat-value mono curr" data-gbp="214000">£214,000</div></div>
+        <div class="card"><div class="stat-label">Joint assets</div><div class="stat-value mono curr" data-gbp="340000">£340,000</div></div>
+        <div class="card"><div class="stat-label">Household debt</div><div class="stat-value mono curr" data-gbp="98500">£98,500</div></div>
+      </div>
+
+      <!-- Couple retirement goal -->
+      <div class="card" style="margin-top:14px;">
+        <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:10px;">
+          <div>
+            <div class="card-title">Retirement — saving as a couple</div>
+            <div class="stat-value mono curr" data-gbp="507000" style="margin-top:8px;">£507,000</div>
+            <div class="stat-delta neutral">Combined savings toward your <span class="mono">£1.8M</span> household target</div>
+          </div>
+          <div style="text-align:right;">
+            <div class="stat-label">Projected joint retirement</div>
+            <div class="stat-value" style="font-size:22px;">Age 59</div>
+            <div class="stat-delta up">28% of the way there</div>
+          </div>
+        </div>
+        <div class="track" style="margin-top:16px; height:8px;"><div class="fill" style="width:28%"></div></div>
+        <div class="grid g-2" style="margin-top:16px;">
+          <div class="holding-row" style="border:1px solid var(--line); border-radius:12px; padding:12px;">
+            <div><div class="stat-label">Your contribution</div><div class="stat-value" style="font-size:16px; margin-top:4px;">£293,000 <span style="color:var(--graphite); font-weight:500;">· £2,000/mo</span></div></div>
+          </div>
+          <div class="holding-row" style="border:1px solid var(--line); border-radius:12px; padding:12px;">
+            <div><div class="stat-label">Partner's contribution</div><div class="stat-value" style="font-size:16px; margin-top:4px;">£214,000 <span style="color:var(--graphite); font-weight:500;">· £900/mo</span></div></div>
+          </div>
+        </div>
+        <p style="font-size:11.5px; color:var(--graphite); margin-top:12px;">Illustrative projection based on both incomes and current contribution rates — not personalised advice.</p>
+      </div>
+
+      <!-- Children's education savings -->
+      <div class="card" style="margin-top:14px;">
+        <div class="section-head" style="margin-bottom:10px;">
+          <div><div class="card-title">Children's education savings</div><p style="margin-top:3px;">Junior ISAs and education funds, tracked against each child's target.</p></div>
+          <button class="btn btn-ghost btn-sm" onclick="openAddFund('education')">+ Add education fund</button>
+        </div>
+        <div id="eduFundsList"></div>
+      </div>
+
+      <div class="grid g-3" style="margin-top:14px;">
+        <div class="card"><div class="stat-label">Household investments</div><div class="stat-value mono curr" data-gbp="507000">£507,000</div></div>
+        <div class="card"><div class="stat-label">Children</div><div class="stat-value">2</div><div class="stat-delta neutral">Junior ISAs connected</div></div>
+        <div class="card"><div class="stat-label">Family retirement target</div><div class="stat-value mono">£1.8M</div></div>
+      </div>
+    </section>
+
+    <!-- ============ 13. DOCUMENTS ============ -->
+    <section class="view" id="view-documents">
+      <div class="section-head"><div><h2>Documents</h2><p>Statements, contract notes and tax summaries — mock data.</p></div></div>
+      <div class="card" id="docsList"></div>
+    </section>
+
+    <!-- ============ 14. SECURITY ============ -->
+    <section class="view" id="view-security">
+      <div class="section-head"><div><h2>Privacy &amp; Security Centre</h2><p>Your financial information remains under your control.</p></div></div>
+
+      <div class="card-title" style="margin-bottom:6px;">Fraud &amp; scam protection</div>
+      <div class="cta-strip" style="margin-top:0;">
+        <div class="txt">2 active scam warnings for your area<small>Impersonation scams reported via bank transfer — stay alert to unexpected requests</small></div>
+        <button class="btn btn-red btn-sm" onclick="toast('Fraud management hub opened (simulated).')">Open fraud hub</button>
+      </div>
+      <div class="grid g-2" style="margin-top:10px;">
+        <button class="opp-card" style="align-items:flex-start;" onclick="toast('Report a scam flow opened (simulated).')"><span style="font-size:20px;">🚨</span><h4>Report a scam or fraud</h4><p>Flag a suspicious transaction or message in minutes.</p></button>
+        <button class="opp-card" style="align-items:flex-start;" onclick="toast('Suspicious payment blocked (simulated).')"><span style="font-size:20px;">⛔</span><h4>Block a suspicious payment</h4><p>Stop a payment you didn't authorise before it clears.</p></button>
+      </div>
+
+      <div class="section-head" style="margin:18px 0 6px;">
+        <div><div class="card-title">Connected accounts</div></div>
+        <button class="btn btn-ghost btn-sm" onclick="openConnectApp()">+ Connect another app</button>
+      </div>
+      <div class="card" id="connectedAccounts"></div>
+      <div class="card-title" style="margin:18px 0 6px;">Data permissions</div>
+      <div class="card">
+        <div class="switchrow"><div><div class="t">AI insights</div><div class="d">Allow AI to analyse connected data for insights</div></div><div class="switch on" data-key="ai"><div class="knob"></div></div></div>
+        <div class="switchrow"><div><div class="t">Adviser sharing</div><div class="d">Allow sharing of projections with an adviser when requested</div></div><div class="switch on" data-key="adviser"><div class="knob"></div></div></div>
+        <div class="switchrow"><div><div class="t">Partner visibility</div><div class="d">Share your summary wealth figures with your partner</div></div><div class="switch on" data-key="partner"><div class="knob"></div></div></div>
+        <div class="switchrow"><div><div class="t">Marketing insights</div><div class="d">Use behaviour patterns for HSBC product marketing</div></div><div class="switch" data-key="marketing"><div class="knob"></div></div></div>
+      </div>
+      <div class="card-title" style="margin:18px 0 6px;">Data sharing history</div>
+      <div class="card" style="font-size:12.5px; color:var(--graphite); line-height:2;">
+        <div>Shared retirement projection with Sarah Mitchell — 14 Aug 2026</div>
+        <div>Reviewed connected accounts permissions — 02 Aug 2026</div>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<!-- ============ AI FAB + PANEL ============ -->
+<button class="ai-fab" id="aiFab">✦</button>
+<div class="ai-panel" id="aiPanel">
+  <div class="ai-head">
+    <div><h3>HSBC AI Wealth Coach</h3><p>Ask your money anything.</p></div>
+    <button class="modal-close" style="position:static; background:rgba(255,255,255,.12); color:#fff;" onclick="toggleAi(false)">✕</button>
+  </div>
+  <div class="ai-body" id="aiBody"></div>
+  <div class="suggest-row">
+    <button class="suggest-chip" data-q="When could I potentially retire?">Retirement</button>
+    <button class="suggest-chip" data-q="How much am I paying in fees?">Fees</button>
+    <button class="suggest-chip" data-q="What happens if markets fall 30%?">Market crash</button>
+    <button class="suggest-chip" data-q="What should I invest in?">Investment advice</button>
+  </div>
+  <div class="ai-input-row">
+    <input type="text" id="aiInput" placeholder="Ask about your finances…">
+    <button id="aiMic" title="Ask by speaking" style="background:var(--mist-2); color:var(--ink);" onclick="voiceAsk()">🎤</button>
+    <button id="aiSend">↑</button>
+  </div>
+</div>
+
+<!-- ============ ADVISER MODAL ============ -->
+<div class="overlay" id="overlay"></div>
+<div class="modal" id="adviserModal">
+  <button class="modal-close" onclick="closeModals()">✕</button>
+  <div id="adviserStep1">
+    <h3>Let's talk it through.</h3>
+    <p class="sub">An HSBC adviser can help you understand your options and provide appropriate guidance based on your circumstances.</p>
+    <div class="cat-grid" id="catGrid">
+      <button class="cat-chip">Investments</button>
+      <button class="cat-chip">Pension &amp; Retirement</button>
+      <button class="cat-chip">Fees &amp; Charges</button>
+      <button class="cat-chip">Mortgage &amp; Borrowing</button>
+      <button class="cat-chip">International Wealth</button>
+      <button class="cat-chip">Insurance &amp; Protection</button>
+      <button class="cat-chip">Other</button>
+    </div>
+    <div class="adviser-card">
+      <div class="av">SM</div>
+      <div><div class="nm">Sarah Mitchell ★★★★★</div><div class="role">HSBC Wealth Adviser · Investments, Retirement, Long-term planning</div></div>
+    </div>
+    <div class="card-title">Today</div>
+    <div class="slot-grid"><button class="slot" data-t="Today, 4:30 PM · Video">4:30 PM — Video</button><button class="slot" data-t="Today, 5:15 PM · Phone">5:15 PM — Phone</button></div>
+    <div class="card-title">Tomorrow</div>
+    <div class="slot-grid">
+      <button class="slot" data-t="Tomorrow, 10:00 AM · Video">10:00 AM — Video</button>
+      <button class="slot" data-t="Tomorrow, 11:30 AM · Phone">11:30 AM — Phone</button>
+      <button class="slot" data-t="Tomorrow, 2:00 PM · Branch">2:00 PM — Branch</button>
+    </div>
+    <div style="display:flex; gap:8px; margin-top:6px; flex-wrap:wrap;">
+      <button class="btn btn-red btn-block" id="bookBtn">Book a call</button>
+    </div>
+    <div style="display:flex; gap:8px; margin-top:8px;">
+      <button class="btn btn-ghost" style="flex:1;" onclick="toast('Callback requested — HSBC will call you shortly.')">Request a callback</button>
+      <button class="btn btn-ghost" style="flex:1;" onclick="toast('Adviser message flow opened.')">Message an adviser</button>
+    </div>
+    <button class="btn btn-ghost btn-block" style="margin-top:8px;" onclick="toast('Calling HSBC 03457 404 404 (simulated).')">Call HSBC</button>
+  </div>
+  <div id="adviserStep2" style="display:none; text-align:center; padding:10px 0 6px;">
+    <div style="font-size:40px;">✅</div>
+    <h3 style="margin-top:10px;">Appointment confirmed</h3>
+    <p class="sub" id="confirmDetail">Tomorrow, 10:00 AM — Video with Sarah Mitchell</p>
+    <p style="font-size:12px; color:var(--graphite); margin-bottom:16px;">Your HSBC adviser will have access only to the information you chose to share.</p>
+    <button class="btn btn-primary btn-block" onclick="openShare()">Share my projection with my adviser</button>
+    <button class="btn btn-ghost btn-block" style="margin-top:8px;" onclick="closeModals()">Done</button>
+  </div>
+</div>
+
+<!-- ============ SHARE MODAL ============ -->
+<div class="modal" id="shareModal">
+  <button class="modal-close" onclick="closeModals()">✕</button>
+  <h3>Share this with my HSBC adviser</h3>
+  <p class="sub">Your adviser can see the scenario you were exploring so you don't have to start from scratch. You choose what's shared.</p>
+  <div class="check-row"><input type="checkbox" checked><span>Projection</span></div>
+  <div class="check-row"><input type="checkbox" checked><span>Comparison</span></div>
+  <div class="check-row"><input type="checkbox" checked><span>Retirement assumptions</span></div>
+  <div class="check-row"><input type="checkbox" checked><span>AI questions</span></div>
+  <div class="check-row"><input type="checkbox" checked><span>Fee analysis</span></div>
+  <div class="check-row"><input type="checkbox"><span>Spending history</span></div>
+  <div class="check-row"><input type="checkbox"><span>External account data</span></div>
+  <div style="display:flex; gap:8px; margin-top:16px;">
+    <button class="btn btn-ghost" style="flex:1;" onclick="closeModals()">Cancel</button>
+    <button class="btn btn-red" style="flex:1;" onclick="doShare()">Share &amp; continue</button>
+  </div>
+</div>
+
+<!-- ============ DISCLAIMER MODAL ============ -->
+<div class="modal" id="discModal">
+  <button class="modal-close" onclick="closeModals()">✕</button>
+  <h3>About this projection</h3>
+  <p class="sub">Projections are illustrative and based on the assumptions selected. They are not guarantees of future performance and do not constitute personalised financial advice. Speak to an HSBC adviser for guidance based on your individual circumstances.</p>
+  <button class="btn btn-primary btn-block" onclick="closeModals()">Understood</button>
+</div>
+
+<!-- ============ ADD FUND MODAL ============ -->
+<div class="modal" id="addFundModal">
+  <button class="modal-close" onclick="closeModals()">✕</button>
+  <h3 id="addFundTitle">Add a fund</h3>
+  <p class="sub" id="addFundSub">Add any investment, savings or pension fund — from HSBC or anywhere else.</p>
+  <div style="display:flex; flex-direction:column; gap:12px; margin-top:6px;">
+    <div>
+      <label style="font-size:12px; font-weight:600; color:var(--graphite);">Fund / account name</label>
+      <input type="text" id="fundName" placeholder="e.g. Vanguard Global Equity Fund" style="width:100%; margin-top:5px; border:1px solid var(--line); border-radius:10px; padding:11px 13px; font-size:13px; font-family:inherit;">
+    </div>
+    <div>
+      <label style="font-size:12px; font-weight:600; color:var(--graphite);">Provider / notes</label>
+      <input type="text" id="fundProvider" placeholder="e.g. Vanguard, or another bank" style="width:100%; margin-top:5px; border:1px solid var(--line); border-radius:10px; padding:11px 13px; font-size:13px; font-family:inherit;">
+    </div>
+    <div>
+      <label style="font-size:12px; font-weight:600; color:var(--graphite);">Current value (£)</label>
+      <input type="number" id="fundValue" placeholder="0" style="width:100%; margin-top:5px; border:1px solid var(--line); border-radius:10px; padding:11px 13px; font-size:13px; font-family:inherit;">
+    </div>
+    <div id="eduOnlyFields" style="display:none; flex-direction:column; gap:12px;">
+      <div>
+        <label style="font-size:12px; font-weight:600; color:var(--graphite);">Child's name</label>
+        <input type="text" id="fundChild" placeholder="e.g. Emma" style="width:100%; margin-top:5px; border:1px solid var(--line); border-radius:10px; padding:11px 13px; font-size:13px; font-family:inherit;">
+      </div>
+      <div>
+        <label style="font-size:12px; font-weight:600; color:var(--graphite);">Target amount (£) and year</label>
+        <div style="display:flex; gap:8px; margin-top:5px;">
+          <input type="number" id="fundTarget" placeholder="150000" style="flex:1; border:1px solid var(--line); border-radius:10px; padding:11px 13px; font-size:13px; font-family:inherit;">
+          <input type="number" id="fundYear" placeholder="2038" style="width:100px; border:1px solid var(--line); border-radius:10px; padding:11px 13px; font-size:13px; font-family:inherit;">
+        </div>
+      </div>
+    </div>
+  </div>
+  <div style="display:flex; gap:8px; margin-top:18px;">
+    <button class="btn btn-ghost" style="flex:1;" onclick="closeModals()">Cancel</button>
+    <button class="btn btn-red" style="flex:1;" id="saveFundBtn" onclick="saveFund()">Save fund</button>
+  </div>
+</div>
+
+<!-- ============ CONNECT APP MODAL ============ -->
+<div class="modal" id="connectAppModal">
+  <button class="modal-close" onclick="closeModals()">✕</button>
+  <h3>Extract data from another app</h3>
+  <p class="sub">Securely link an external bank, broker or platform. We'll pull in balances so everything sits in one view.</p>
+  <div id="connectAppList" style="display:flex; flex-direction:column; gap:8px; margin-top:6px;"></div>
+  <p style="font-size:11.5px; color:var(--graphite); margin-top:14px;">This is a simulated connection for prototype purposes — no real accounts are accessed.</p>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- ============ MOBILE NAV ============ -->
+<nav class="mobilenav">
+  <button class="active" data-view="overview"><span class="ic">🏠</span>Home</button>
+  <button data-view="paymove"><span class="ic">💸</span>Pay</button>
+  <button data-view="__ai__"><span class="ic">✦</span>AI</button>
+  <button data-view="pots"><span class="ic">🫙</span>Pots</button>
+  <button data-view="security"><span class="ic">👤</span>Profile</button>
+</nav>
+
+<script>
+/* =====================================================================
+   HSBC GLOBAL WEALTHVIEW — DEMO LOGIC
+   All data below is illustrative mock data for prototype purposes only.
+   ===================================================================== */
+
+/* ---------- 1. NAVIGATION ---------- */
+const viewTitles = {
+  overview:'Overview', paymove:'Pay & Move', trends:'Money Trends', pots:'Savings Pots', cardshub:'Cards',
+  global:'Global Wealth', investments:'Investments', mortgage:'Mortgage', retirement:'Retirement',
+  goals:'Life Events', behaviour:'Financial Behaviour', fees:'Fees & Costs', twin:'Financial Twin',
+  compare:'Comparisons', insights:'Insights', family:'Family Wealth', documents:'Documents', security:'Security'
+};
+function showView(name){
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  const target = document.getElementById('view-'+name);
+  if(target) target.classList.add('active');
+  document.getElementById('viewTitle').textContent = viewTitles[name] || 'Overview';
+  document.querySelectorAll('#desktopNav .navitem').forEach(b=>b.classList.toggle('active', b.dataset.view===name));
+  document.querySelectorAll('.mobilenav button').forEach(b=>b.classList.toggle('active', b.dataset.view===name));
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+document.querySelectorAll('#desktopNav .navitem').forEach(b=>b.addEventListener('click',()=>showView(b.dataset.view)));
+document.querySelectorAll('.mobilenav button').forEach(b=>b.addEventListener('click',()=>{
+  if(b.dataset.view==='__ai__'){ toggleAi(true); return; }
+  showView(b.dataset.view);
+}));
+
+/* ---------- 2. TOAST ---------- */
+let toastTimer;
+function toast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer=setTimeout(()=>t.classList.remove('show'),2600);
+}
+
+/* ---------- 3. CURRENCY CONVERSION (mock FX, base GBP) ---------- */
+const fx = { GBP:1, USD:1.27, EUR:1.17, INR:106.4, AED:4.66, SGD:1.71, HKD:9.93 };
+const symbols = { GBP:'£', USD:'$', EUR:'€', INR:'₹', AED:'د.إ ', SGD:'S$', HKD:'HK$' };
+function formatCurrency(gbpValue, code){
+  const v = gbpValue * fx[code];
+  const rounded = Math.round(v);
+  return symbols[code] + rounded.toLocaleString('en-GB');
+}
+function applyCurrency(code){
+  document.querySelectorAll('.curr[data-gbp]').forEach(el=>{
+    const gbp = parseFloat(el.dataset.gbp);
+    const small = el.querySelector('small');
+    el.textContent = formatCurrency(gbp, code);
+    if(small) el.appendChild(small);
+  });
+}
+document.getElementById('currencySelect').addEventListener('change', e=>applyCurrency(e.target.value));
+
+/* ---------- 4. SPARKLINE / SVG CHART HELPERS ---------- */
+function drawSparkline(svgId, values, color){
+  const svg = document.getElementById(svgId);
+  if(!svg) return;
+  const w=520, h=svg.clientHeight||70;
+  svg.setAttribute('viewBox',`0 0 ${w} ${h}`);
+  svg.setAttribute('preserveAspectRatio','none');
+  const max=Math.max(...values), min=Math.min(...values);
+  const range = (max-min)||1;
+  const step = w/(values.length-1);
+  const pts = values.map((v,i)=>`${i*step},${h-8-((v-min)/range)*(h-16)}`);
+  const line = pts.join(' ');
+  const area = `0,${h} ${line} ${w},${h}`;
+  svg.innerHTML = `
+    <defs><linearGradient id="grad-${svgId}" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="${color}" stop-opacity="0.28"/>
+      <stop offset="100%" stop-color="${color}" stop-opacity="0"/>
+    </linearGradient></defs>
+    <polygon points="${area}" fill="url(#grad-${svgId})"/>
+    <polyline points="${line}" fill="none" stroke="${color}" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+  `;
+}
+drawSparkline('spark-wealth', [120,148,171,190,235,268,301,340,378,410,452,482.64], '#DB0011');
+drawSparkline('spark-savings', [22,21,19,20,17,18,16,17,15,16,16,16], '#0E7D4D');
+drawSparkline('spark-spend', [100,101,103,104,108,109,111,112,113,114,116,117], '#DB0011');
+drawSparkline('spark-forecast', [2140,2005,1930,2400,2260,2110,1980,1860,2210,2040,1900,1860], '#0E7D4D');
+
+/* ---------- 3b. HIDE BALANCES (shoulder-surfing protection) ---------- */
+let balancesHidden = false;
+function toggleHideBalance(){
+  balancesHidden = !balancesHidden;
+  document.getElementById('hideBalanceBtn').textContent = balancesHidden ? '🙈' : '👁️';
+  document.querySelectorAll('.curr[data-gbp]').forEach(el=>{
+    if(balancesHidden){
+      if(!el.dataset.realText) el.dataset.realText = el.textContent;
+      el.textContent = '••••••';
+    } else if(el.dataset.realText){
+      el.textContent = el.dataset.realText;
+      delete el.dataset.realText;
+    }
+  });
+  toast(balancesHidden ? 'Balances hidden.' : 'Balances visible.');
+}
+
+/* ---------- PAY & MOVE: recent payees + standing orders/direct debits ---------- */
+let payees = [
+  {ic:'👩', nm:'Sarah Ahmed', sub:'Sort code 40-xx-xx · last paid 3 days ago'},
+  {ic:'🏠', nm:'Landlord — Riverside Lets', sub:'Sort code 20-xx-xx · last paid 1 Aug'},
+  {ic:'👨', nm:'Imran K.', sub:'Mobile number · last paid 12 Aug'},
+];
+document.getElementById('payeesList').innerHTML = payees.map(p=>`
+  <div class="holding-row">
+    <div class="holding-left"><div class="holding-icon">${p.ic}</div><div><div class="holding-name">${p.nm}</div><div class="holding-sub">${p.sub}</div></div></div>
+    <button class="btn btn-ghost btn-sm" onclick="toast('Opening pay flow for '+'${p.nm}'+' (simulated).')">Pay</button>
+  </div>
+`).join('');
+
+let recurring = [
+  {t:'Standing Order', nm:'Rent — Riverside Lets', sub:'£1,450 · monthly, 1st'},
+  {t:'Direct Debit', nm:'HSBC Credit Card', sub:'Minimum payment · monthly, 18th'},
+  {t:'Direct Debit', nm:'Council Tax', sub:'£186 · monthly, 3rd'},
+  {t:'Standing Order', nm:'Savings sweep to Pot', sub:'£200 · monthly, 28th'},
+];
+function renderRecurring(){
+  document.getElementById('recurringList').innerHTML = recurring.map((r,i)=>`
+    <div class="holding-row">
+      <div class="holding-left"><div class="holding-icon">📆</div><div><div class="holding-name">${r.nm}</div><div class="holding-sub">${r.t} · ${r.sub}</div></div></div>
+      <button class="btn btn-ghost btn-sm" onclick="cancelRecurring(${i})">Cancel</button>
+    </div>
+  `).join('');
+}
+function cancelRecurring(i){
+  const nm = recurring[i].nm;
+  recurring.splice(i,1);
+  renderRecurring();
+  toast(nm+' cancelled.');
+}
+renderRecurring();
+
+/* ---------- MONEY TRENDS: spending insights by category ---------- */
+barBlock(document.getElementById('spendCategories'), [
+  {label:'Groceries',pct:26},{label:'Bills & housing',pct:34},{label:'Eating out',pct:14},
+  {label:'Transport',pct:9},{label:'Shopping',pct:11},{label:'Entertainment',pct:6}
+]);
+
+/* ---------- SAVINGS POTS ---------- */
+let pots = [
+  {ic:'✈️', nm:'Holiday — Japan', v:2140, target:5000},
+  {ic:'🏡', nm:'House deposit top-up', v:18600, target:30000},
+  {ic:'🛟', nm:'Emergency fund', v:6200, target:10000},
+  {ic:'🎄', nm:'Christmas', v:340, target:1200},
+];
+function renderPots(){
+  document.getElementById('potsGrid').innerHTML = pots.map((p,i)=>{
+    const pct = Math.min(100, Math.round((p.v/p.target)*100));
+    return `
+    <div class="card">
+      <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:8px;">
+        <div style="display:flex; align-items:center; gap:10px;"><span style="font-size:22px;">${p.ic}</span><div class="card-title" style="font-size:13px; color:var(--ink); font-weight:700;">${p.nm}</div></div>
+        <button class="btn btn-ghost btn-sm" onclick="removePot(${i})">✕</button>
+      </div>
+      <div class="stat-value mono curr" data-gbp="${p.v}" style="margin-top:10px; font-size:22px;">£${p.v.toLocaleString()}</div>
+      <div class="stat-delta neutral">of £${p.target.toLocaleString()} target · ${pct}%</div>
+      <div class="track" style="margin-top:10px;"><div class="fill" style="width:${pct}%"></div></div>
+      <button class="btn btn-ghost btn-sm btn-block" style="margin-top:12px;" onclick="addToPot(${i})">+ Add money</button>
+    </div>`;
+  }).join('');
+  applyCurrency(document.getElementById('currencySelect').value);
+}
+function addToPot(i){
+  const amt = parseFloat(prompt('How much would you like to add to "'+pots[i].nm+'"? (£)', '50'));
+  if(!amt || amt<=0) return;
+  pots[i].v += amt;
+  renderPots();
+  toast('£'+amt.toLocaleString()+' added to '+pots[i].nm+'.');
+}
+function removePot(i){
+  const nm = pots[i].nm;
+  pots.splice(i,1);
+  renderPots();
+  toast(nm+' pot removed.');
+}
+function openCreatePot(){
+  const nm = prompt('Name your new pot (e.g. "New car"):');
+  if(!nm) return;
+  const target = parseFloat(prompt('Target amount (£)?', '1000')) || 1000;
+  pots.push({ic:'🫙', nm, v:0, target});
+  renderPots();
+  toast(nm+' pot created.');
+}
+renderPots();
+
+/* ---------- CARDS: freeze, PIN reveal, replacement, gambling block ---------- */
+let cardsHub = [
+  {nm:'HSBC Premier Debit Card', sub:'•••• 4471 · Visa', frozen:false, gambling:false, pin:'••••'},
+  {nm:'HSBC Premier Credit Card', sub:'•••• 8823 · Mastercard', frozen:false, gambling:false, pin:'••••'},
+];
+function renderCardsHub(){
+  document.getElementById('cardsList').innerHTML = cardsHub.map((c,i)=>`
+    <div class="card" style="margin-bottom:14px;">
+      <div class="holding-row" style="border:none; padding:0 0 12px;">
+        <div class="holding-left"><div class="holding-icon">💳</div><div><div class="holding-name">${c.nm}</div><div class="holding-sub">${c.sub}${c.frozen?' · <span style=\"color:var(--red)\">Frozen</span>':''}</div></div></div>
+        <div style="display:flex; gap:8px; flex-wrap:wrap;">
+          <button class="btn btn-ghost btn-sm" onclick="revealPin(${i})">View PIN</button>
+          <button class="btn btn-ghost btn-sm" onclick="reportLost(${i})">Report lost</button>
+        </div>
+      </div>
+      <div class="switchrow"><div><div class="t">Freeze card</div><div class="d">Instantly stop all new transactions on this card</div></div><div class="switch ${c.frozen?'on':''}" onclick="toggleCardFreeze(${i})"><div class="knob"></div></div></div>
+      <div class="switchrow"><div><div class="t">Restrict to gambling businesses</div><div class="d">Self-exclusion — decline all gambling transactions</div></div><div class="switch ${c.gambling?'on':''}" onclick="toggleGambling(${i})"><div class="knob"></div></div></div>
+    </div>
+  `).join('');
+}
+function toggleCardFreeze(i){
+  cardsHub[i].frozen = !cardsHub[i].frozen;
+  renderCardsHub();
+  toast(cardsHub[i].nm+(cardsHub[i].frozen?' frozen.':' unfrozen.'));
+}
+function toggleGambling(i){
+  cardsHub[i].gambling = !cardsHub[i].gambling;
+  renderCardsHub();
+  toast('Gambling restriction '+(cardsHub[i].gambling?'enabled':'disabled')+' for '+cardsHub[i].nm+'.');
+}
+function revealPin(i){ toast(cardsHub[i].nm+' PIN: '+ (Math.floor(1000+Math.random()*8999)) + ' (simulated, on-screen only).'); }
+function reportLost(i){ toast(cardsHub[i].nm+' reported lost — replacement ordered (simulated).'); }
+renderCardsHub();
+
+function barBlock(container, items, unitLabel){
+  container.innerHTML = items.map(i=>`
+    <div class="barrow"><div class="lbl">${i.label}</div><div class="track"><div class="fill" style="width:${i.pct}%"></div></div><div class="val">${i.pct}%</div></div>
+  `).join('');
+}
+barBlock(document.getElementById('alloc-asset'), [
+  {label:'Equities',pct:52},{label:'Pension funds',pct:22},{label:'Bonds & alt.',pct:13},{label:'Cash',pct:13}
+]);
+barBlock(document.getElementById('alloc-cash'), [
+  {label:'Invested',pct:81},{label:'Cash held',pct:19}
+]);
+
+/* ---------- 5. HOLDINGS (connected investments — add / remove any fund) ---------- */
+const holdings = [
+  {ic:'🏦', nm:'Workplace Pension', sub:'HSBC UK', v:186200, d:'+8.1%'},
+  {ic:'📈', nm:'Stocks & Shares ISA', sub:'HSBC Global Investment Centre', v:92840, d:'+11.4%'},
+  {ic:'🧺', nm:'Mutual Funds', sub:'6 funds', v:50000, d:'+6.8%'},
+  {ic:'🔁', nm:'SIPs', sub:'£2,000/month', v:24000, d:'+9.2%'},
+  {ic:'💷', nm:'Savings', sub:'HSBC Premier Savings', v:93600, d:'+4.1%'},
+  {ic:'📜', nm:'Bonds & Alternatives', sub:'Fixed income + alt. assets', v:60000, d:'+5.7%'},
+];
+function renderHoldings(){
+  document.getElementById('holdingsList').innerHTML = holdings.map((h,i)=>`
+    <div class="holding-row">
+      <div class="holding-left"><div class="holding-icon">${h.ic}</div><div><div class="holding-name">${h.nm}</div><div class="holding-sub">${h.sub}</div></div></div>
+      <div style="display:flex; align-items:center; gap:14px;">
+        <div class="holding-right"><div class="holding-value curr" data-gbp="${h.v}">£${h.v.toLocaleString()}</div><div class="stat-delta up">${h.d}</div></div>
+        <button class="btn btn-ghost btn-sm" title="Remove fund" onclick="removeFund(${i})">✕</button>
+      </div>
+    </div>
+  `).join('');
+  applyCurrency(document.getElementById('currencySelect').value);
+}
+function removeFund(i){
+  const nm = holdings[i].nm;
+  holdings.splice(i,1);
+  renderHoldings();
+  toast(nm+' removed from your holdings.');
+}
+renderHoldings();
+
+/* ---------- 5b. CHILDREN'S EDUCATION FUNDS (add / remove) ---------- */
+const eduFunds = [
+  {nm:"Emma's Junior ISA", sub:'HSBC Junior ISA', v:42300, target:150000, year:2036},
+  {nm:"Noah's Junior ISA", sub:'HSBC Junior ISA', v:18900, target:150000, year:2039},
+];
+function renderEduFunds(){
+  const el = document.getElementById('eduFundsList');
+  if(!el) return;
+  el.innerHTML = eduFunds.map((e,i)=>{
+    const pct = Math.min(100, Math.round((e.v/e.target)*100));
+    return `
+    <div class="holding-row" style="flex-direction:column; align-items:stretch; gap:8px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap;">
+        <div class="holding-left"><div class="holding-icon">🎓</div><div><div class="holding-name">${e.nm}</div><div class="holding-sub">${e.sub} · target ${e.year}</div></div></div>
+        <div style="display:flex; align-items:center; gap:14px;">
+          <div class="holding-right"><div class="holding-value curr" data-gbp="${e.v}">£${e.v.toLocaleString()}</div><div class="stat-delta neutral">of £${e.target.toLocaleString()} · ${pct}%</div></div>
+          <button class="btn btn-ghost btn-sm" title="Remove fund" onclick="removeEduFund(${i})">✕</button>
+        </div>
+      </div>
+      <div class="track"><div class="fill" style="width:${pct}%"></div></div>
+    </div>`;
+  }).join('');
+  applyCurrency(document.getElementById('currencySelect').value);
+}
+function removeEduFund(i){
+  const nm = eduFunds[i].nm;
+  eduFunds.splice(i,1);
+  renderEduFunds();
+  toast(nm+' removed.');
+}
+renderEduFunds();
+
+/* ---------- 5c. ADD FUND MODAL (investment or education) ---------- */
+let addFundMode = 'investment';
+function openAddFund(mode){
+  addFundMode = mode || 'investment';
+  document.getElementById('fundName').value='';
+  document.getElementById('fundProvider').value='';
+  document.getElementById('fundValue').value='';
+  document.getElementById('fundChild').value='';
+  document.getElementById('fundTarget').value='';
+  document.getElementById('fundYear').value='';
+  document.getElementById('eduOnlyFields').style.display = addFundMode==='education' ? 'flex' : 'none';
+  document.getElementById('addFundTitle').textContent = addFundMode==='education' ? 'Add an education fund' : 'Add a fund';
+  document.getElementById('addFundSub').textContent = addFundMode==='education'
+    ? "Add a Junior ISA or education fund for one of your children."
+    : 'Add any investment, savings or pension fund — from HSBC or anywhere else.';
+  overlay.classList.add('open');
+  addFundModal.classList.add('open');
+}
+function saveFund(){
+  const nm = document.getElementById('fundName').value.trim();
+  const provider = document.getElementById('fundProvider').value.trim();
+  const val = parseFloat(document.getElementById('fundValue').value);
+  if(!nm || isNaN(val) || val<0){ toast('Add a fund name and a value to continue.'); return; }
+  if(addFundMode==='education'){
+    const child = document.getElementById('fundChild').value.trim();
+    const target = parseFloat(document.getElementById('fundTarget').value) || Math.max(val*2, 50000);
+    const year = document.getElementById('fundYear').value.trim() || '—';
+    eduFunds.push({ nm: child ? `${child}'s ${nm}` : nm, sub: provider || 'Manually added', v: val, target, year });
+    renderEduFunds();
+  } else {
+    holdings.push({ ic:'💼', nm, sub: provider || 'Manually added', v: val, d:'—' });
+    renderHoldings();
+  }
+  closeModals();
+  toast(nm+' added.');
+}
+
+/* ---------- 5d. CONNECT ANOTHER APP (extract data) ---------- */
+const availableApps = [
+  {nm:'Monzo', ic:'🟠', desc:'Current account & savings pots'},
+  {nm:'Revolut', ic:'🔵', desc:'Multi-currency accounts & investments'},
+  {nm:'Chase UK', ic:'🔷', desc:'Current account & saver'},
+  {nm:'Zerodha', ic:'🟢', desc:'Indian equities & mutual funds'},
+  {nm:'Fidelity', ic:'⚫', desc:'ISAs, SIPPs & funds'},
+  {nm:'PayPal', ic:'🔹', desc:'Balance & transaction history'},
+];
+function renderConnectAppList(){
+  const el = document.getElementById('connectAppList');
+  if(!el) return;
+  if(availableApps.length===0){
+    el.innerHTML = `<p style="font-size:12.5px; color:var(--graphite);">All suggested apps are connected. You can add a fund manually instead.</p>`;
+    return;
+  }
+  el.innerHTML = availableApps.map((a,i)=>`
+    <div class="holding-row">
+      <div class="holding-left"><div class="holding-icon">${a.ic}</div><div><div class="holding-name">${a.nm}</div><div class="holding-sub">${a.desc}</div></div></div>
+      <button class="btn btn-red btn-sm" onclick="connectApp(${i})">Connect</button>
+    </div>
+  `).join('');
+}
+function openConnectApp(){
+  renderConnectAppList();
+  overlay.classList.add('open');
+  connectAppModal.classList.add('open');
+}
+function connectApp(i){
+  const app = availableApps[i];
+  availableApps.splice(i,1);
+  const extracted = Math.round((15000 + Math.random()*60000)/100)*100;
+  connected.push({ n: app.nm, d:'Connected · Data extracted just now' });
+  holdings.push({ ic: app.ic, nm: app.nm, sub:'Extracted automatically', v: extracted, d:'—' });
+  renderConnected();
+  renderHoldings();
+  renderConnectAppList();
+  toast('Data extracted from '+app.nm+' — £'+extracted.toLocaleString()+' synced.');
+}
+
+/* ---------- 6. GLOBAL WEALTH ---------- */
+const countries = [
+  {c:'United Kingdom', flag:'🇬🇧', assets:322400, invest:210000, cash:64600, liab:61340, ret:'8.4%'},
+  {c:'India', flag:'🇮🇳', assets:64200, invest:41000, cash:9200, liab:0, ret:'11.2%'},
+  {c:'United Arab Emirates', flag:'🇦🇪', assets:38900, invest:22000, cash:8900, liab:0, ret:'6.7%'},
+  {c:'Singapore', flag:'🇸🇬', assets:24600, invest:14000, cash:5200, liab:0, ret:'7.1%'},
+  {c:'Hong Kong', flag:'🇭🇰', assets:18900, invest:6000, cash:4300, liab:0, ret:'5.9%'},
+  {c:'United States', flag:'🇺🇸', assets:13640, invest:9000, cash:1400, liab:0, ret:'9.5%'},
+];
+document.getElementById('countryGrid').innerHTML = countries.map(c=>`
+  <div class="card">
+    <div style="display:flex; align-items:center; gap:8px;"><span style="font-size:20px;">${c.flag}</span><div class="card-title">${c.c}</div></div>
+    <div class="stat-value curr" data-gbp="${c.assets}" style="margin-top:10px;">£${c.assets.toLocaleString()}</div>
+    <div class="stat-delta up">${c.ret} return</div>
+    <hr class="hair">
+    <div style="font-size:12px; color:var(--graphite); display:flex; justify-content:space-between;"><span>Invested</span><span class="mono curr" data-gbp="${c.invest}">£${c.invest.toLocaleString()}</span></div>
+    <div style="font-size:12px; color:var(--graphite); display:flex; justify-content:space-between; margin-top:4px;"><span>Cash</span><span class="mono curr" data-gbp="${c.cash}">£${c.cash.toLocaleString()}</span></div>
+    <div style="font-size:12px; color:var(--graphite); display:flex; justify-content:space-between; margin-top:4px;"><span>Liabilities</span><span class="mono curr" data-gbp="${c.liab}">£${c.liab.toLocaleString()}</span></div>
+  </div>
+`).join('');
+document.getElementById('fxGrid').innerHTML = Object.keys(fx).filter(k=>k!=='GBP').map(k=>`
+  <div class="card" style="padding:14px;"><div class="stat-label">GBP → ${k}</div><div class="stat-value" style="font-size:18px;">${fx[k]}</div></div>
+`).join('');
+
+/* ---------- 7. RETIREMENT SCENARIOS ---------- */
+const retScenarios = {5:{age:61,prob:'68%'}, 7:{age:57,prob:'84%'}, 9:{age:54,prob:'93%'}};
+document.querySelectorAll('.ret-scn').forEach(b=>b.addEventListener('click',()=>{
+  document.querySelectorAll('.ret-scn').forEach(x=>x.classList.remove('btn-red'));
+  b.classList.add('btn-red');
+  const r = retScenarios[b.dataset.r];
+  document.getElementById('ret-age').textContent = r.age;
+  document.getElementById('ret-prob').textContent = r.prob;
+}));
+function probBars(){
+  const el = document.getElementById('prob-chart');
+  const data = [{a:55,p:68},{a:57,p:84},{a:60,p:96}];
+  el.innerHTML = data.map(d=>`<div class="barrow"><div class="lbl">Age ${d.a}</div><div class="track"><div class="fill" style="width:${d.p}%"></div></div><div class="val">${d.p}%</div></div>`).join('');
+}
+probBars();
+
+/* ---------- 8. LIFE EVENT SIMULATOR ---------- */
+const events = [
+  {ic:'🏠', nm:'Buy a home', dAge:3, dCash:-620, note:'Buy a £600,000 home'},
+  {ic:'💍', nm:'Get married', dAge:0.4, dCash:-180, note:'Wedding & shared finances'},
+  {ic:'👶', nm:'Have a child', dAge:1.2, dCash:-410, note:'Childcare & related costs'},
+  {ic:'🌴', nm:'Career break', dAge:1.8, dCash:-900, note:'12-month pause in contributions'},
+  {ic:'🚀', nm:'Start a business', dAge:2.5, dCash:-1500, note:'Reduced contributions, higher risk'},
+  {ic:'✈️', nm:'Move country', dAge:0.9, dCash:-320, note:'Relocation & currency exposure'},
+  {ic:'🌅', nm:'Early retirement', dAge:-4, dCash:800, note:'Retire earlier than planned'},
+  {ic:'🎓', nm:'Education', dAge:0.7, dCash:-260, note:'Further study costs'},
+];
+document.getElementById('eventGrid').innerHTML = events.map((e,i)=>`
+  <button class="event-chip" data-i="${i}"><span class="ic">${e.ic}</span><span class="nm">${e.nm}</span></button>
+`).join('');
+document.querySelectorAll('.event-chip').forEach(chip=>chip.addEventListener('click',()=>{
+  document.querySelectorAll('.event-chip').forEach(c=>c.classList.remove('active'));
+  chip.classList.add('active');
+  const e = events[chip.dataset.i];
+  const newAge = Math.round((57 + e.dAge)*10)/10;
+  const box = document.getElementById('eventResult');
+  box.style.display='block';
+  box.innerHTML = `
+    <div class="card-title">${e.note}</div>
+    <p style="font-size:13px; color:var(--ink); margin-top:8px;">Under this scenario, your projected retirement age changes from <b>57</b> to <b>${newAge}</b>.</p>
+    <div class="readout-grid">
+      <div class="readout"><div class="l">Current projection</div><div class="v">Age 57</div></div>
+      <div class="readout"><div class="l">Scenario projection</div><div class="v">Age ${newAge}</div></div>
+      <div class="readout"><div class="l">Monthly cash flow change</div><div class="v mono">£${e.dCash}</div></div>
+      <div class="readout"><div class="l">Net worth impact (illustrative)</div><div class="v mono">${e.dCash<0?'−':'+'}£${Math.abs(e.dCash*180).toLocaleString()}</div></div>
+    </div>
+  `;
+}));
+
+/* ---------- 9. FEES: 10-year impact ---------- */
+document.getElementById('see10yrBtn').addEventListener('click', ()=>{
+  const box = document.getElementById('tenYearImpact');
+  const show = box.style.display==='none';
+  box.style.display = show ? 'block' : 'none';
+  document.getElementById('see10yrBtn').textContent = show ? 'Hide 10-year impact' : 'See 10-year impact';
+  if(show){
+    const balance = 293000, years=10, r1=0.068, r2=0.092; // net-of-fee return: current vs lower-cost
+    let v1=balance, v2=balance; const series1=[v1], series2=[v2];
+    for(let i=0;i<years;i++){ v1*=(1+r1); v2*=(1+r2); series1.push(v1); series2.push(v2); }
+    drawSparkline('spark-fees', series2, '#DB0011');
+  }
+});
+
+/* ---------- 9b. MORTGAGE ---------- */
+function calcPayment(balance, annualRatePct, months){
+  const r = annualRatePct/100/12;
+  if(r===0) return balance/months;
+  return balance * r / (1 - Math.pow(1+r, -months));
+}
+function calcPayoff(balance, annualRatePct, payment){
+  const r = annualRatePct/100/12;
+  let bal = balance, months = 0, interest = 0;
+  while(bal>0 && months<600){
+    const int = bal*r;
+    const principal = payment-int;
+    if(principal<=0){ months=600; break; }
+    bal -= principal;
+    interest += int;
+    months++;
+  }
+  return {months, interest};
+}
+const mortBalance = 312400, mortRateCurrent = 4.29, mortTermMonths = 228, mortPaymentCurrent = 1780;
+
+(function drawMortgageBalance(){
+  const r = mortRateCurrent/100/12;
+  let bal = mortBalance; const series=[bal];
+  for(let y=0;y<19;y++){
+    for(let m=0;m<12;m++){
+      const int = bal*r;
+      const principal = mortPaymentCurrent-int;
+      bal = Math.max(0, bal-principal);
+    }
+    series.push(Math.round(bal));
+  }
+  drawSparkline('spark-mortgage', series, '#DB0011');
+})();
+
+document.querySelectorAll('.mort-scn').forEach(b=>b.addEventListener('click',()=>{
+  document.querySelectorAll('.mort-scn').forEach(x=>x.classList.remove('btn-red'));
+  b.classList.add('btn-red');
+  const rate = parseFloat(b.dataset.r);
+  const payment = calcPayment(mortBalance, rate, mortTermMonths);
+  document.getElementById('mort-payment').textContent = '£'+Math.round(payment).toLocaleString();
+  const change = Math.round(payment-mortPaymentCurrent);
+  document.getElementById('mort-change').textContent = (change>=0?'+£':'−£')+Math.abs(change).toLocaleString();
+  const totalInterest = Math.round(payment*mortTermMonths - mortBalance);
+  document.getElementById('mort-interest').textContent = '£'+totalInterest.toLocaleString();
+  document.getElementById('mort-payoff-age').textContent = 62;
+}));
+
+document.getElementById('s-overpay').addEventListener('input', e=>{
+  const overpay = parseFloat(e.target.value);
+  document.getElementById('v-overpay').textContent = '£'+overpay.toLocaleString();
+  const basePayoff = calcPayoff(mortBalance, mortRateCurrent, mortPaymentCurrent);
+  const newPayoff = calcPayoff(mortBalance, mortRateCurrent, mortPaymentCurrent+overpay);
+  const yrs = Math.round(newPayoff.months/12*10)/10;
+  document.getElementById('overpay-term').textContent = yrs+' yrs';
+  const saved = Math.max(0, Math.round(basePayoff.interest - newPayoff.interest));
+  document.getElementById('overpay-saved').textContent = '£'+saved.toLocaleString();
+});
+
+/* ---------- 10. FINANCIAL TWIN / WHAT-IF ---------- */
+const twinInputs = ['return','invest','age','inflation','salary','spend'];
+function readTwin(){
+  return {
+    ret: parseFloat(document.getElementById('s-return').value),
+    inv: parseFloat(document.getElementById('s-invest').value),
+    age: parseFloat(document.getElementById('s-age').value),
+    infl: parseFloat(document.getElementById('s-inflation').value),
+    sal: parseFloat(document.getElementById('s-salary').value),
+    spend: parseFloat(document.getElementById('s-spend').value),
+  };
+}
+function updateTwin(){
+  const t = readTwin();
+  document.getElementById('v-return').textContent = t.ret+'%';
+  document.getElementById('v-invest').textContent = '£'+t.inv.toLocaleString();
+  document.getElementById('v-age').textContent = t.age;
+  document.getElementById('v-inflation').textContent = t.infl+'%';
+  document.getElementById('v-salary').textContent = t.sal+'%';
+  document.getElementById('v-spend').textContent = '£'+t.spend.toLocaleString();
+
+  const yearsToRetire = Math.max(t.age-43, 1);
+  const balance = 293000;
+  const monthlyReal = t.inv*12;
+  let projected = balance;
+  const series=[balance];
+  for(let y=0;y<yearsToRetire;y++){ projected = projected*(1+t.ret/100) + monthlyReal; series.push(projected); }
+  const netWorth = projected + (421300-293000) * Math.pow(1+ (t.sal/100)/2, yearsToRetire);
+  document.getElementById('tw-networth').textContent = '£'+(netWorth/1e6).toFixed(2)+'M';
+  document.getElementById('tw-invval').textContent = '£'+(projected/1e3).toFixed(0)+'K';
+  document.getElementById('tw-age').textContent = t.age;
+  const prob = Math.max(35, Math.min(97, Math.round(50 + (t.ret-6)*6 - (t.spend-3400)/120 + (t.inv-2000)/150)));
+  document.getElementById('tw-prob').textContent = prob+'%';
+  drawSparkline('spark-twin', series, '#DB0011');
+}
+twinInputs.forEach(k=>document.getElementById('s-'+k).addEventListener('input', updateTwin));
+updateTwin();
+
+/* ---------- 11. COMPARISON ENGINE ---------- */
+document.getElementById('cmp-slider').addEventListener('input', e=>{
+  const yrs = parseInt(e.target.value);
+  const base = 482640;
+  const a = base * Math.pow(1.07, yrs);
+  const b = base * Math.pow(1.074, yrs) * (1 - 0.0034*yrs); // lower cost scenario, illustrative
+  document.getElementById('cmp-value').textContent = '£'+Math.round(b).toLocaleString();
+  document.getElementById('cmp-diff').textContent = (b>a?'+':'') + '£'+Math.round(b-a).toLocaleString();
+});
+
+/* ---------- 12. INSIGHTS: opportunities / leakage / alerts ---------- */
+const opportunities = [
+  {t:'Increase monthly investment', d:'If your monthly contribution increased from £2,000 to £2,300, the projection changes by approximately 11 months.'},
+  {t:'Reduce investment costs', d:'If annual costs were reduced from 0.82% to 0.48%, the illustrative 10-year projection changes by approximately £18,000.'},
+  {t:'Review cash allocation', d:'You currently hold £18,400 in cash. Explore different hypothetical return scenarios.'},
+  {t:'Diversification', d:'Your portfolio currently has significant exposure to equities.'},
+  {t:'Emergency fund', d:'Your current cash reserve represents approximately 4.2 months of spending.'},
+  {t:'FX cost exposure', d:'Cross-border transfers account for an estimated £210 of annual costs.'},
+  {t:'Pension contribution headroom', d:'You may have unused pension annual allowance based on your connected accounts.'},
+];
+document.getElementById('oppGrid').innerHTML = opportunities.map(o=>`
+  <div class="opp-card"><h4>${o.t}</h4><p>${o.d}</p>
+    <div class="opp-actions">
+      <button class="btn btn-ghost btn-sm" onclick="exploreOpportunity('${o.t.replace(/'/g,"")}')">Explore projection</button>
+      <button class="btn btn-red btn-sm" onclick="openAdviser()">Speak to adviser</button>
+    </div>
+  </div>
+`).join('');
+function exploreOpportunity(title){
+  if(title.includes('cost')){ showView('fees'); }
+  else if(title.includes('cash')||title.includes('Emergency')||title.includes('Diversification')){ showView('twin'); }
+  else { showView('retirement'); }
+  toast('Opened: '+title);
+}
+const leakage = [
+  {v:2840, t:'Estimated investment costs'},
+  {v:1260, t:'Recurring subscriptions'},
+  {v:18400, t:'Cash currently held'},
+  {v:740, t:'Potential duplicate investment exposure'},
+  {v:520, t:'Estimated FX costs'},
+];
+document.getElementById('leakageList').innerHTML = leakage.map(l=>`
+  <div class="holding-row">
+    <div class="holding-left"><div>
+      <div class="holding-value curr" data-gbp="${l.v}">£${l.v.toLocaleString()}</div>
+      <div class="holding-sub">${l.t}</div>
+    </div></div>
+    <button class="btn btn-ghost btn-sm" onclick="toggleExplore(this)">Explore</button>
+  </div>
+  <div class="explore-detail" style="display:none; font-size:12px; color:var(--graphite); padding:0 4px 12px;">Illustrative detail based on your connected accounts. Not a recommendation to change any product.</div>
+`).join('');
+function toggleExplore(btn){
+  const detail = btn.closest('.holding-row').nextElementSibling;
+  detail.style.display = detail.style.display==='none' ? 'block' : 'none';
+}
+const alerts = [
+  {t:'Retirement projection changed', d:'Your projected retirement date moved from 57 to 58 because your monthly contributions decreased.'},
+  {t:'Equity exposure changed', d:'Your equity exposure increased from 64% to 68% over the last quarter.'},
+  {t:'Cash increased', d:'Your cash balance increased by 14% over the last 12 months.'},
+  {t:'Investment costs changed', d:'Estimated annual costs increased from £2,620 to £2,840.'},
+];
+document.getElementById('alertsList').innerHTML = alerts.map(a=>`
+  <div class="holding-row">
+    <div><div class="holding-name" style="font-size:13px;">${a.t}</div><div class="holding-sub" style="max-width:420px;">${a.d}</div></div>
+    <button class="btn btn-ghost btn-sm" onclick="toast('${a.d.replace(/'/g,"")}')">See why</button>
+  </div>
+`).join('');
+
+/* ---------- 13. DOCUMENTS ---------- */
+const docs = [
+  {n:'Annual ISA Statement 2025–26', d:'Issued 6 Apr 2026'},
+  {n:'Pension Contribution Summary', d:'Q2 2026'},
+  {n:'Fee & Charges Disclosure', d:'Issued 1 Jan 2026'},
+  {n:'Mortgage Illustration — 600,000', d:'Generated from Life Event Simulator'},
+];
+document.getElementById('docsList').innerHTML = docs.map(d=>`
+  <div class="holding-row">
+    <div class="holding-left"><div class="holding-icon">📄</div><div><div class="holding-name">${d.n}</div><div class="holding-sub">${d.d}</div></div></div>
+    <button class="btn btn-ghost btn-sm" onclick="toast('Opening document (simulated).')">View</button>
+  </div>
+`).join('');
+
+/* ---------- 14. SECURITY: connected accounts + switches ---------- */
+let connected = [
+  {n:'HSBC UK Current & Savings', d:'Connected · Live'},
+  {n:'HSBC Global Investment Centre', d:'Connected · Live'},
+  {n:'External Pension Provider', d:'Connected · Live'},
+  {n:'Third-party Brokerage', d:'Connected · Live'},
+];
+function renderConnected(){
+  document.getElementById('connectedAccounts').innerHTML = connected.map((c,i)=>`
+    <div class="holding-row">
+      <div><div class="holding-name" style="font-size:13px;">${c.n}</div><div class="holding-sub">${c.d}</div></div>
+      <button class="btn btn-ghost btn-sm" onclick="disconnect(${i})">Disconnect</button>
+    </div>
+  `).join('');
+}
+function disconnect(i){ connected.splice(i,1); renderConnected(); toast('Account disconnected.'); }
+renderConnected();
+document.querySelectorAll('.switch').forEach(sw=>sw.addEventListener('click',()=>{
+  sw.classList.toggle('on');
+  toast((sw.dataset.key)+' setting updated.');
+}));
+
+/* ---------- 15. MODALS: adviser / share / disclaimer ---------- */
+const overlay = document.getElementById('overlay');
+const adviserModal = document.getElementById('adviserModal');
+const shareModal = document.getElementById('shareModal');
+const discModal = document.getElementById('discModal');
+const addFundModal = document.getElementById('addFundModal');
+const connectAppModal = document.getElementById('connectAppModal');
+let selectedSlot = 'Tomorrow, 10:00 AM · Video';
+
+function closeModals(){
+  [adviserModal, shareModal, discModal, addFundModal, connectAppModal].forEach(m=>m.classList.remove('open'));
+  overlay.classList.remove('open');
+}
+overlay.addEventListener('click', closeModals);
+
+function openAdviser(category){
+  document.getElementById('adviserStep1').style.display='block';
+  document.getElementById('adviserStep2').style.display='none';
+  document.querySelectorAll('.cat-chip').forEach(c=>c.classList.toggle('active', category && c.textContent.trim().startsWith(category.split(' ')[0])));
+  overlay.classList.add('open');
+  adviserModal.classList.add('open');
+}
+document.querySelectorAll('.cat-chip').forEach(c=>c.addEventListener('click',()=>{
+  document.querySelectorAll('.cat-chip').forEach(x=>x.classList.remove('active'));
+  c.classList.add('active');
+}));
+document.querySelectorAll('.slot').forEach(s=>s.addEventListener('click',()=>{
+  document.querySelectorAll('.slot').forEach(x=>x.classList.remove('active'));
+  s.classList.add('active');
+  selectedSlot = s.dataset.t;
+}));
+document.getElementById('bookBtn').addEventListener('click', ()=>{
+  document.getElementById('adviserStep1').style.display='none';
+  document.getElementById('adviserStep2').style.display='block';
+  document.getElementById('confirmDetail').textContent = selectedSlot + ' with Sarah Mitchell';
+});
+document.getElementById('openAiBtnSidebar').addEventListener('click', ()=>toggleAi(true));
+
+function openShare(){ closeModals(); overlay.classList.add('open'); shareModal.classList.add('open'); }
+function doShare(){ closeModals(); toast('Your HSBC adviser has the context you chose to share.'); }
+function openDisclaimer(){ overlay.classList.add('open'); discModal.classList.add('open'); }
+
+/* ---------- 16. AI WEALTH COACH ---------- */
+const aiPanel = document.getElementById('aiPanel');
+const aiBody = document.getElementById('aiBody');
+function toggleAi(open){ aiPanel.classList.toggle('open', open); }
+document.getElementById('aiFab').addEventListener('click', ()=>toggleAi(true));
+
+function pushMsg(role, html, showAdviser){
+  const div = document.createElement('div');
+  div.className = 'msg '+role;
+  if(role==='ai'){
+    div.innerHTML = `<span class="tag">${showAdviser?'Analysis':'Information'}</span>${html}` + (showAdviser?`<div class="adv-inline"><button class="btn btn-red btn-sm" onclick="closeModalsThenAdviser()">Speak to an HSBC adviser</button></div>`:'');
+  } else {
+    div.textContent = html;
+  }
+  aiBody.appendChild(div);
+  aiBody.scrollTop = aiBody.scrollHeight;
+}
+function closeModalsThenAdviser(){ toggleAi(false); openAdviser(); }
+
+function aiRespond(qRaw){
+  const q = qRaw.toLowerCase();
+  if(q.includes('retire')){
+    pushMsg('ai', `Based on a 7% assumed return and your current £2,000 monthly contribution, your projection points to age <b>57</b>, with an estimated probability of <b>84%</b> against your target wealth. At 5% return this shifts to age 61; at 9% return, age 54.`, true);
+  } else if(q.includes('fee') || q.includes('cost') || q.includes('paying')){
+    pushMsg('ai', `Your estimated annual investment cost is <b>£2,840</b>, or <b>0.82%</b> per year. A lower-cost illustrative scenario of 0.48% would represent roughly <b>£1,180</b> less per year, based on your current invested balance.`, true);
+  } else if(q.includes('performance') || q.includes('investments performing')){
+    pushMsg('ai', `Your blended investment performance over the last 12 months is <b>+9.8%</b>. Your Stocks & Shares ISA leads at +11.4%, followed by your SIPs at +9.2%.`, false);
+  } else if(q.includes('market') || q.includes('crash') || q.includes('fall 30')){
+    pushMsg('ai', `Under a hypothetical 30% market fall, your invested assets of roughly £293,000 would fall by an estimated £87,900 in that scenario, before any recovery. This is a stress-test illustration, not a prediction.`, true);
+  } else if(q.includes('spend') || q.includes('restaurant') || q.includes('behaviour') || q.includes('behavior')){
+    pushMsg('ai', `Your lifestyle spending has increased approximately 11% since your last salary increase, and your savings rate has moved from 22% to 16% over the last 12 months.`, false);
+  } else if(q.includes('mortgage') || q.includes('remortgage') || q.includes('overpay')){
+    pushMsg('ai', `Your outstanding mortgage balance is <b>£312,400</b> at 4.29%, with 14 months left on your current fix. Overpaying by £300/month could shorten your term and reduce the interest paid — see the Mortgage section for the full projection.`, true);
+  } else if(q.includes('house') || q.includes('home') || q.includes('buy a')){
+    pushMsg('ai', `Buying a £600,000 home shifts your projected retirement age from 57 to approximately 60 under current assumptions, largely due to reduced monthly investment capacity.`, true);
+  } else if(q.includes('cash')){
+    pushMsg('ai', `You're currently holding approximately £93,600 in savings and cash equivalents, representing around 19% of your total wealth and roughly 4.2 months of spending.`, false);
+  } else if(q.includes('sip') || q.includes('increase') && q.includes('invest')){
+    pushMsg('ai', `Increasing your monthly investment from £2,000 to £2,300 could move your projected retirement date approximately 11 months earlier, under current assumptions.`, true);
+  } else if(q.includes('changed') || q.includes('position')){
+    pushMsg('ai', `Your net worth has grown from approximately £120,000 in 2021 to £421,300 today — an increase driven primarily by investment contributions and market performance.`, false);
+  } else if(q.includes('invest in') || q.includes('should i') || q.includes('advice') || q.includes('what should')){
+    pushMsg('ai', `I can help you compare investments, explain risks and model different scenarios, but I can't provide personalised financial advice here.`, true);
+  } else {
+    pushMsg('ai', `I can help you analyse, compare and project your finances — try asking about retirement, fees, performance, spending or a specific life event.`, false);
+  }
+}
+document.querySelectorAll('.suggest-chip').forEach(c=>c.addEventListener('click',()=>{
+  const q = c.dataset.q;
+  pushMsg('user', q);
+  setTimeout(()=>aiRespond(q), 380);
+}));
+function sendAi(){
+  const input = document.getElementById('aiInput');
+  const q = input.value.trim();
+  if(!q) return;
+  pushMsg('user', q);
+  input.value='';
+  setTimeout(()=>aiRespond(q), 380);
+}
+document.getElementById('aiSend').addEventListener('click', sendAi);
+document.getElementById('aiInput').addEventListener('keydown', e=>{ if(e.key==='Enter') sendAi(); });
+
+/* ---------- voice-activated chat (simulated) ---------- */
+const voiceSamples = ['When could I potentially retire?', 'How much am I paying in fees?', 'What are my spending insights this month?'];
+function voiceAsk(){
+  const mic = document.getElementById('aiMic');
+  mic.style.background = 'var(--red)'; mic.style.color = '#fff';
+  toast('Listening…');
+  setTimeout(()=>{
+    mic.style.background = 'var(--mist-2)'; mic.style.color = 'var(--ink)';
+    const q = voiceSamples[Math.floor(Math.random()*voiceSamples.length)];
+    pushMsg('user', q);
+    setTimeout(()=>aiRespond(q), 380);
+  }, 1000);
+}
+
+/* seed conversation */
+pushMsg('ai', `Ask me about your retirement, fees, performance, spending, or a life event like buying a home. I'll answer with information, analysis or projections — never personalised advice.`, false);
+
+</script>
+</body>
+</html>

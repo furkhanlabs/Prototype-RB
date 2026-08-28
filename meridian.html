@@ -1,0 +1,2449 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+<title>Meridian — Your financial life. One view.</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root{
+  --bg:#ffffff;
+  --panel:#ffffff;
+  --panel-2:#f6f4ee;
+  --panel-3:#ece7db;
+  --border:#ddd6c7;
+  --border-soft:#e8e3d7;
+  --text:#211e17;
+  --text-dim:#6b6659;
+  --text-faint:#9c9686;
+  --accent:#9c6b2e;
+  --accent-soft:#9c6b2e22;
+  --accent-line:#9c6b2e66;
+  --positive:#3f8f65;
+  --positive-soft:#3f8f6520;
+  --negative:#b23f30;
+  --negative-soft:#b23f3020;
+  --blue:#3f6fa8;
+  --violet:#7a6bab;
+  --radius:14px;
+  --radius-sm:9px;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;height:100%;}
+body{-webkit-font-smoothing:antialiased;font-size:14px;overflow-x:hidden;}
+::selection{background:var(--accent-soft);color:var(--accent);}
+::-webkit-scrollbar{width:8px;height:8px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:8px;}
+a{color:inherit;text-decoration:none;}
+button{font-family:inherit;cursor:pointer;}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
+.serif{font-family:'Fraunces',serif;}
+.mono{font-family:'IBM Plex Mono',monospace;}
+
+/* ---------- layout shell ---------- */
+#shell{display:flex;min-height:100vh;}
+.sidebar{
+  width:236px;flex-shrink:0;background:var(--panel-2);border-right:1px solid var(--border-soft);
+  display:flex;flex-direction:column;position:fixed;top:0;bottom:0;left:0;z-index:40;
+  transition:transform .25s ease;
+}
+.brand{padding:26px 22px 20px;display:flex;align-items:center;gap:10px;}
+.brand-mark{width:26px;height:26px;position:relative;flex-shrink:0;}
+.brand-mark svg{width:100%;height:100%;}
+.brand-word{font-family:'Fraunces',serif;font-size:18px;letter-spacing:.03em;font-weight:500;}
+.brand-sub{font-size:9.5px;letter-spacing:.14em;color:var(--text-faint);text-transform:uppercase;margin-top:1px;}
+
+.nav-scroll{flex:1;overflow-y:auto;padding:6px 12px;}
+.nav-group-label{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--text-faint);padding:16px 10px 6px;}
+.nav-item{
+  display:flex;align-items:center;gap:11px;padding:9px 10px;border-radius:9px;color:var(--text-dim);
+  font-size:13.2px;font-weight:500;cursor:pointer;transition:background .15s,color .15s;position:relative;
+  border:none;background:none;width:100%;text-align:left;
+}
+.nav-item:hover{background:var(--panel-3);color:var(--text);}
+.nav-item.active{background:var(--panel-3);color:var(--accent);}
+.nav-item.active::before{content:'';position:absolute;left:-12px;top:8px;bottom:8px;width:2.5px;background:var(--accent);border-radius:2px;}
+.nav-item svg{width:16px;height:16px;flex-shrink:0;opacity:.85;}
+.nav-item.active svg{opacity:1;}
+
+.sidebar-foot{padding:14px 18px 18px;border-top:1px solid var(--border-soft);}
+.user-chip{display:flex;align-items:center;gap:10px;padding:8px;border-radius:10px;}
+.user-chip:hover{background:var(--panel-3);}
+.avatar{width:32px;height:32px;border-radius:50%;background:linear-gradient(150deg,#9c6b2e,#6b4f26);display:flex;align-items:center;justify-content:center;font-family:'Fraunces',serif;font-size:13px;color:#111;flex-shrink:0;}
+.user-meta{line-height:1.3;overflow:hidden;}
+.user-name{font-size:13px;font-weight:600;white-space:nowrap;}
+.user-role{font-size:11px;color:var(--text-faint);white-space:nowrap;}
+
+/* ---------- main ---------- */
+.main-wrap{margin-left:236px;flex:1;min-width:0;display:flex;flex-direction:column;min-height:100vh;}
+.topbar{
+  height:62px;flex-shrink:0;display:flex;align-items:center;gap:16px;padding:0 28px;
+  border-bottom:1px solid var(--border-soft);position:sticky;top:0;background:rgba(255,255,255,.86);backdrop-filter:blur(10px);z-index:30;
+}
+.hamburger{display:none;background:none;border:none;color:var(--text);padding:6px;}
+.hamburger svg{width:20px;height:20px;}
+.search-box{
+  flex:1;max-width:420px;display:flex;align-items:center;gap:9px;background:var(--panel-2);
+  border:1px solid var(--border-soft);border-radius:10px;padding:8px 12px;color:var(--text-faint);
+}
+.search-box svg{width:15px;height:15px;flex-shrink:0;}
+.search-box input{background:none;border:none;outline:none;color:var(--text);font-size:13px;width:100%;font-family:inherit;}
+.search-box input::placeholder{color:var(--text-faint);}
+.topbar-right{margin-left:auto;display:flex;align-items:center;gap:6px;}
+.icon-btn{position:relative;width:36px;height:36px;border-radius:9px;border:1px solid transparent;background:none;color:var(--text-dim);display:flex;align-items:center;justify-content:center;}
+.icon-btn:hover{background:var(--panel-2);border-color:var(--border-soft);color:var(--text);}
+.icon-btn svg{width:17px;height:17px;}
+.dot-badge{position:absolute;top:6px;right:7px;width:7px;height:7px;border-radius:50%;background:var(--accent);border:1.5px solid var(--panel);}
+
+.main{padding:26px 32px 100px;max-width:1240px;}
+.page-head{margin-bottom:22px;}
+.eyebrow{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);font-weight:600;margin-bottom:6px;}
+.page-title{font-family:'Fraunces',serif;font-size:26px;font-weight:500;letter-spacing:-.01em;}
+.page-desc{color:var(--text-dim);font-size:13.5px;margin-top:5px;max-width:620px;line-height:1.5;}
+
+/* ---------- generic components ---------- */
+.grid{display:grid;gap:16px;}
+.g2{grid-template-columns:repeat(2,1fr);}
+.g3{grid-template-columns:repeat(3,1fr);}
+.g4{grid-template-columns:repeat(4,1fr);}
+.g5{grid-template-columns:repeat(5,1fr);}
+.g6{grid-template-columns:repeat(6,1fr);}
+.g7{grid-template-columns:repeat(7,1fr);}
+.card{
+  background:var(--panel);border:1px solid var(--border-soft);border-radius:var(--radius);padding:20px;
+  box-shadow:0 1px 2px rgba(33,30,23,.04), 0 8px 24px rgba(33,30,23,.035);
+}
+.card-tight{padding:16px;}
+.card-title{font-size:12.5px;color:var(--text-dim);font-weight:600;display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
+.card-title .status-dot{margin-left:auto;}
+
+.stat-label{font-size:11.5px;color:var(--text-faint);text-transform:uppercase;letter-spacing:.06em;font-weight:600;}
+.stat-value{font-family:'Fraunces',serif;font-size:22px;margin-top:6px;font-weight:500;}
+.stat-value.lg{font-size:30px;}
+.stat-delta{font-size:12px;margin-top:6px;font-weight:600;display:inline-flex;align-items:center;gap:4px;}
+.up{color:var(--positive);}
+.down{color:var(--negative);}
+.flat{color:var(--text-faint);}
+
+.pill{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:600;padding:3px 9px;border-radius:100px;letter-spacing:.02em;}
+.pill.gold{background:var(--accent-soft);color:var(--accent);}
+.pill.green{background:var(--positive-soft);color:var(--positive);}
+.pill.red{background:var(--negative-soft);color:var(--negative);}
+.pill.blue{background:#3f6fa822;color:var(--blue);}
+.pill.neutral{background:var(--panel-3);color:var(--text-dim);}
+
+.status-dot{width:7px;height:7px;border-radius:50%;display:inline-block;flex-shrink:0;}
+.status-dot.connected{background:var(--positive);box-shadow:0 0 0 3px var(--positive-soft);}
+.status-dot.entered{background:var(--blue);box-shadow:0 0 0 3px #3f6fa822;}
+.status-dot.estimated{background:var(--accent);box-shadow:0 0 0 3px var(--accent-soft);}
+.status-dot.missing{background:var(--text-faint);box-shadow:0 0 0 3px #9c968620;}
+.status-row{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text-faint);}
+
+.btn{
+  border-radius:9px;padding:9px 15px;font-size:13px;font-weight:600;border:1px solid var(--border);
+  background:var(--panel-2);color:var(--text);display:inline-flex;align-items:center;gap:7px;transition:all .15s;
+}
+.btn:hover{border-color:var(--accent-line);}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#141008;}
+.btn.primary:hover{background:#b98a49;}
+.btn.ghost{background:none;border-color:var(--border-soft);color:var(--text-dim);}
+.btn.sm{padding:6px 11px;font-size:12px;}
+.btn svg{width:14px;height:14px;}
+
+table{width:100%;border-collapse:collapse;}
+th{text-align:left;font-size:10.5px;text-transform:uppercase;letter-spacing:.07em;color:var(--text-faint);font-weight:600;padding:0 12px 10px;border-bottom:1px solid var(--border-soft);}
+td{padding:12px;font-size:13.2px;border-bottom:1px solid var(--border-soft);vertical-align:middle;}
+tr:last-child td{border-bottom:none;}
+tbody tr{transition:background .12s;}
+tbody tr:hover{background:var(--panel-2);}
+th.num,td.num{text-align:right;}
+.table-scroll{overflow-x:auto;margin:0 -20px;padding:0 20px;}
+
+.tabs{display:flex;gap:2px;border-bottom:1px solid var(--border-soft);margin-bottom:20px;overflow-x:auto;}
+.tab-btn{padding:10px 4px;margin-right:22px;font-size:13px;font-weight:600;color:var(--text-faint);border:none;background:none;border-bottom:2px solid transparent;white-space:nowrap;}
+.tab-btn.active{color:var(--accent);border-color:var(--accent);}
+.tab-btn:hover{color:var(--text);}
+
+.section-title{font-family:'Fraunces',serif;font-size:16.5px;font-weight:500;margin-bottom:14px;display:flex;align-items:center;gap:10px;}
+.section-title .num{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--text-faint);}
+.note{font-size:11.5px;color:var(--text-faint);line-height:1.5;margin-top:10px;padding-top:10px;border-top:1px dashed var(--border);}
+.note.advice{color:var(--accent);}
+.disclaimer{
+  font-size:11.5px;color:var(--text-faint);background:var(--panel-2);border:1px solid var(--border-soft);
+  border-radius:10px;padding:10px 13px;margin-top:14px;line-height:1.5;display:flex;gap:8px;align-items:flex-start;
+}
+.disclaimer svg{width:14px;height:14px;flex-shrink:0;margin-top:1px;color:var(--accent);}
+
+.divider{height:1px;background:var(--border-soft);margin:18px 0;}
+.hr-list > *+*{border-top:1px solid var(--border-soft);}
+.row-flex{display:flex;align-items:center;justify-content:space-between;padding:12px 0;}
+.row-flex .left{display:flex;align-items:center;gap:11px;}
+.icon-chip{width:34px;height:34px;border-radius:9px;background:var(--panel-3);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.icon-chip svg{width:16px;height:16px;color:var(--accent);}
+
+/* ---------- hero ---------- */
+.hero{padding:6px 0 26px;}
+.hero-top{display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:20px;margin-bottom:18px;}
+.hero-label{font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-faint);font-weight:600;margin-bottom:10px;}
+.hero-value{font-family:'Fraunces',serif;font-size:52px;font-weight:500;letter-spacing:-.015em;line-height:1;}
+.hero-line{height:2px;width:180px;background:var(--border);margin-top:16px;position:relative;overflow:hidden;border-radius:2px;}
+.hero-line::after{content:'';position:absolute;left:0;top:0;bottom:0;width:0;background:var(--accent);animation:draw 1.4s cubic-bezier(.4,0,.2,1) forwards .2s;border-radius:2px;}
+@keyframes draw{to{width:100%;}}
+.hero-delta{margin-top:12px;font-size:14px;}
+.period-toggle{display:flex;gap:2px;background:var(--panel-2);border:1px solid var(--border-soft);border-radius:9px;padding:3px;}
+.period-toggle button{background:none;border:none;padding:6px 12px;font-size:12px;font-weight:600;color:var(--text-faint);border-radius:6px;font-family:'IBM Plex Mono',monospace;}
+.period-toggle button.active{background:var(--panel-3);color:var(--accent);}
+.chart-wrap{height:230px;margin-top:6px;}
+.chart-wrap.sm{height:150px;}
+.chart-wrap.xs{height:110px;}
+
+/* health score ring */
+.ring-wrap{position:relative;width:96px;height:96px;flex-shrink:0;}
+.ring-wrap svg{transform:rotate(-90deg);}
+.ring-center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;}
+.ring-center .num{font-family:'Fraunces',serif;font-size:22px;font-weight:500;}
+.ring-center .den{font-size:9px;color:var(--text-faint);}
+
+.meter{height:6px;background:var(--panel-3);border-radius:4px;overflow:hidden;margin-top:8px;}
+.meter > div{height:100%;background:var(--accent);border-radius:4px;}
+
+/* data quality legend */
+.dq-legend{display:flex;gap:16px;flex-wrap:wrap;font-size:11.5px;color:var(--text-faint);}
+.dq-legend span{display:flex;align-items:center;gap:6px;}
+
+/* assistant */
+.chat-shell{display:flex;flex-direction:column;height:calc(100vh - 200px);min-height:460px;background:var(--panel);border:1px solid var(--border-soft);border-radius:var(--radius);overflow:hidden;box-shadow:0 1px 2px rgba(33,30,23,.04), 0 8px 24px rgba(33,30,23,.035);}
+.chat-log{flex:1;overflow-y:auto;padding:24px;display:flex;flex-direction:column;gap:16px;}
+.msg{max-width:74%;padding:12px 15px;border-radius:13px;font-size:13.5px;line-height:1.55;}
+.msg.user{align-self:flex-end;background:var(--accent);color:#171208;border-bottom-right-radius:4px;}
+.msg.bot{align-self:flex-start;background:var(--panel-2);border:1px solid var(--border-soft);border-bottom-left-radius:4px;}
+.msg.bot .tag-row{display:flex;gap:6px;margin-bottom:8px;}
+.tag{font-size:9.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:2px 7px;border-radius:100px;}
+.tag.fact{background:var(--positive-soft);color:var(--positive);}
+.tag.calc{background:#3f6fa822;color:var(--blue);}
+.tag.proj{background:var(--accent-soft);color:var(--accent);}
+.tag.gen{background:var(--panel-3);color:var(--text-dim);}
+.tag.advice{background:var(--negative-soft);color:var(--negative);}
+.prompt-chips{display:flex;flex-wrap:wrap;gap:8px;padding:16px 24px;border-top:1px solid var(--border-soft);}
+.chip{font-size:12px;padding:7px 12px;border-radius:100px;background:var(--panel-2);border:1px solid var(--border-soft);color:var(--text-dim);}
+.chip:hover{border-color:var(--accent-line);color:var(--text);}
+.chat-input-row{display:flex;gap:10px;padding:16px 20px;border-top:1px solid var(--border-soft);}
+.chat-input-row input{flex:1;background:var(--panel-2);border:1px solid var(--border-soft);border-radius:10px;padding:11px 14px;color:var(--text);font-size:13.5px;font-family:inherit;outline:none;}
+.chat-input-row input:focus{border-color:var(--accent-line);}
+.send-btn{width:42px;height:42px;border-radius:10px;background:var(--accent);border:none;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.send-btn svg{width:17px;height:17px;color:#171208;}
+
+/* connections grid */
+.conn-card{background:var(--panel);border:1px solid var(--border-soft);border-radius:var(--radius);padding:16px;box-shadow:0 1px 2px rgba(33,30,23,.04), 0 8px 24px rgba(33,30,23,.035);}
+.conn-card .top{display:flex;justify-content:space-between;align-items:flex-start;}
+.provider-badge{width:38px;height:38px;border-radius:10px;background:var(--panel-3);display:flex;align-items:center;justify-content:center;font-family:'Fraunces',serif;font-weight:600;font-size:14px;color:var(--accent);}
+
+/* health breakdown */
+.health-item{display:flex;align-items:center;gap:12px;padding:10px 0;}
+.health-item .name{width:150px;font-size:12.5px;color:var(--text-dim);}
+.health-item .meter{flex:1;margin:0;}
+.health-item .val{width:32px;text-align:right;font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--text);}
+
+/* timeline */
+.tl-item{display:flex;gap:16px;padding:14px 0;position:relative;}
+.tl-item::before{content:'';position:absolute;left:5px;top:28px;bottom:-14px;width:1px;background:var(--border);}
+.tl-item:last-child::before{display:none;}
+.tl-dot{width:11px;height:11px;border-radius:50%;background:var(--panel-3);border:2px solid var(--accent);flex-shrink:0;margin-top:4px;}
+.tl-date{font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:var(--text-faint);text-transform:uppercase;letter-spacing:.05em;}
+.tl-text{font-size:13px;margin-top:3px;}
+
+/* mobile bottom nav */
+.bottom-nav{display:none;}
+.mobile-drawer-overlay{display:none;}
+
+@media (max-width:980px){
+  .sidebar{transform:translateX(-100%);box-shadow:0 0 40px rgba(0,0,0,.5);}
+  .sidebar.open{transform:translateX(0);}
+  .main-wrap{margin-left:0;}
+  .hamburger{display:flex;}
+  .g4,.g5,.g6,.g7{grid-template-columns:repeat(2,1fr);}
+  .g3{grid-template-columns:repeat(2,1fr);}
+  .main{padding:18px 16px 100px;}
+  .hero-value{font-size:38px;}
+  .search-box{display:none;}
+  .bottom-nav{
+    display:flex;position:fixed;bottom:0;left:0;right:0;height:64px;background:rgba(255,255,255,.92);
+    backdrop-filter:blur(14px);border-top:1px solid var(--border-soft);z-index:50;
+  }
+  .bn-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;color:var(--text-faint);background:none;border:none;font-size:10px;font-weight:600;}
+  .bn-item svg{width:19px;height:19px;}
+  .bn-item.active{color:var(--accent);}
+  .mobile-drawer-overlay{
+    position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:39;opacity:0;pointer-events:none;transition:opacity .2s;
+  }
+  .mobile-drawer-overlay.show{display:block;opacity:1;pointer-events:auto;}
+}
+@media (max-width:600px){
+  .g2{grid-template-columns:1fr;}
+  .g3,.g4,.g5,.g6,.g7{grid-template-columns:repeat(2,1fr);}
+  .hero-value{font-size:32px;}
+  .msg{max-width:88%;}
+}
+@media (prefers-reduced-motion:reduce){
+  .hero-line::after{animation:none;width:100%;}
+  *{transition:none !important;animation:none !important;}
+}
+
+/* ---------- calendar ---------- */
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin-top:4px;}
+.cal-head{font-size:10px;color:var(--text-faint);text-align:center;padding:4px 0;font-weight:600;}
+.cal-cell{aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:center;border-radius:7px;background:var(--panel-2);position:relative;}
+.cal-cell.empty{background:none;}
+.cal-cell.has-event{background:var(--accent-soft);border:1px solid var(--accent-line);cursor:default;}
+.cal-day{font-size:11px;color:var(--text-dim);font-family:'IBM Plex Mono',monospace;}
+.cal-cell.has-event .cal-day{color:var(--accent);font-weight:600;}
+.cal-dot{width:4px;height:4px;border-radius:50%;background:var(--accent);margin-top:2px;}
+
+/* ---------- market ticker strip ---------- */
+.ticker-strip{display:flex;gap:0;overflow-x:auto;margin-bottom:20px;border:1px solid var(--border-soft);border-radius:var(--radius);background:var(--panel);box-shadow:0 1px 2px rgba(33,30,23,.04), 0 8px 24px rgba(33,30,23,.035);}
+.ticker-item{padding:14px 18px;flex-shrink:0;border-right:1px solid var(--border-soft);min-width:118px;}
+.ticker-item:last-child{border-right:none;}
+.ticker-name{font-size:10.5px;color:var(--text-faint);text-transform:uppercase;letter-spacing:.05em;font-weight:600;}
+.ticker-value{font-family:'IBM Plex Mono',monospace;font-size:14.5px;margin-top:4px;font-weight:600;}
+.ticker-delta{font-size:11px;margin-top:3px;font-weight:600;}
+
+/* ---------- market search ---------- */
+.market-search-wrap{position:relative;margin-bottom:18px;}
+.market-results{position:absolute;top:calc(100% + 6px);left:0;right:0;background:var(--panel);border:1px solid var(--border-soft);border-radius:12px;box-shadow:0 12px 32px rgba(33,30,23,.12);max-height:340px;overflow-y:auto;z-index:20;}
+.market-result-row{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;cursor:pointer;font-size:13px;border-bottom:1px solid var(--border-soft);}
+.market-result-row:last-child{border-bottom:none;}
+.market-result-row:hover{background:var(--panel-2);}
+
+/* ---------- instrument table extras ---------- */
+.type-filter-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;}
+.type-filter-row button{font-size:12px;padding:7px 13px;border-radius:100px;background:var(--panel-2);border:1px solid var(--border-soft);color:var(--text-dim);font-weight:600;}
+.type-filter-row button.active{background:var(--accent);border-color:var(--accent);color:#171208;}
+.asset-row{cursor:pointer;}
+.asset-row:hover{background:var(--panel-2);}
+.watch-star{width:15px;height:15px;color:var(--text-faint);flex-shrink:0;cursor:pointer;}
+.watch-star.active{color:var(--accent);}
+.cmp-check{width:14px;height:14px;accent-color:#9c6b2e;cursor:pointer;}
+
+/* ---------- compare tray ---------- */
+.compare-tray{
+  position:fixed;left:50%;bottom:22px;transform:translateX(-50%);z-index:45;background:var(--panel-3);
+  border:1px solid var(--border);border-radius:100px;padding:8px 8px 8px 18px;display:flex;align-items:center;gap:14px;
+  box-shadow:0 16px 40px rgba(33,30,23,.18);
+}
+@media (max-width:980px){ .compare-tray{ bottom:78px; } }
+
+/* ---------- asset detail modal ---------- */
+.modal-overlay{position:fixed;inset:0;background:rgba(20,17,10,.5);z-index:60;display:flex;align-items:flex-end;justify-content:center;}
+@media (min-width:700px){ .modal-overlay{align-items:center;} }
+.modal-sheet{
+  background:var(--panel);width:100%;max-width:640px;max-height:88vh;overflow-y:auto;border-radius:18px 18px 0 0;
+  border:1px solid var(--border-soft);box-shadow:0 20px 60px rgba(33,30,23,.2);
+}
+@media (min-width:700px){ .modal-sheet{border-radius:18px;} }
+.modal-head{position:sticky;top:0;background:var(--panel);padding:20px 24px 14px;border-bottom:1px solid var(--border-soft);display:flex;justify-content:space-between;align-items:flex-start;z-index:2;}
+.modal-close{width:32px;height:32px;border-radius:9px;background:var(--panel-2);border:none;display:flex;align-items:center;justify-content:center;color:var(--text-dim);flex-shrink:0;}
+.modal-body{padding:20px 24px 26px;}
+
+/* ---------- watchlist tabs ---------- */
+.wl-tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px;}
+.wl-tabs button{font-size:12.5px;padding:8px 14px;border-radius:100px;background:var(--panel-2);border:1px solid var(--border-soft);color:var(--text-dim);font-weight:600;}
+.wl-tabs button.active{background:var(--accent-soft);border-color:var(--accent-line);color:var(--accent);}
+
+/* ---------- discover mini cards ---------- */
+.discover-row{display:flex;gap:12px;overflow-x:auto;padding-bottom:4px;}
+.discover-card{flex-shrink:0;width:170px;background:var(--panel);border:1px solid var(--border-soft);border-radius:12px;padding:13px;box-shadow:0 1px 2px rgba(33,30,23,.04);}
+
+/* ---------- chat mode toggle ---------- */
+.mode-toggle{display:flex;gap:2px;background:var(--panel-2);border:1px solid var(--border-soft);border-radius:9px;padding:3px;margin-bottom:16px;width:fit-content;}
+.mode-toggle button{background:none;border:none;padding:8px 16px;font-size:12.5px;font-weight:600;color:var(--text-faint);border-radius:6px;}
+.mode-toggle button.active{background:var(--panel-3);color:var(--accent);}
+</style>
+</head>
+<body>
+
+<div id="shell">
+  <div class="mobile-drawer-overlay" id="overlay"></div>
+  <aside class="sidebar" id="sidebar">
+    <div class="brand">
+      <div class="brand-mark">
+        <svg viewBox="0 0 26 26" fill="none"><circle cx="13" cy="13" r="11.5" stroke="#9c6b2e" stroke-width="1.3"/><path d="M2 13H24M13 2C16.5 5.5 18.3 9 18.3 13C18.3 17 16.5 20.5 13 24C9.5 20.5 7.7 17 7.7 13C7.7 9 9.5 5.5 13 2Z" stroke="#9c6b2e" stroke-width="1.1"/></svg>
+      </div>
+      <div>
+        <div class="brand-word">Meridian</div>
+        <div class="brand-sub">Financial OS</div>
+      </div>
+    </div>
+    <nav class="nav-scroll" id="navScroll"></nav>
+    <div class="sidebar-foot">
+      <div class="user-chip" onclick="go('profile')">
+        <div class="avatar">AM</div>
+        <div class="user-meta">
+          <div class="user-name">Alex Morgan</div>
+          <div class="user-role">Prototype account</div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <div class="main-wrap">
+    <header class="topbar">
+      <button class="hamburger" id="hamburger" aria-label="Open menu">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+      </button>
+      <div class="search-box">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+        <input id="globalSearch" placeholder="Search holdings, accounts, documents, transactions…" />
+      </div>
+      <div class="topbar-right">
+        <button class="icon-btn" title="Notifications" onclick="go('notifications')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 01-3.4 0"/></svg>
+          <span class="dot-badge"></span>
+        </button>
+        <button class="icon-btn" title="Security & privacy" onclick="go('privacy')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2l8 3.5v6c0 5-3.4 8.7-8 10.5-4.6-1.8-8-5.5-8-10.5v-6L12 2z"/></svg>
+        </button>
+      </div>
+    </header>
+    <main class="main" id="main"></main>
+  </div>
+</div>
+
+<nav class="bottom-nav" id="bottomNav"></nav>
+<div id="modalRoot"></div>
+<div class="compare-tray" id="compareTray" style="display:none;"></div>
+
+<script>
+/* ============================================================
+   MERIDIAN — provider-neutral UK financial OS prototype
+   All data below is fictional demo data for "Alex Morgan".
+   ============================================================ */
+
+const ICONS = {
+  overview:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 19V10M10 19V4M16 19v-7M22 19H2"/></svg>',
+  balance:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3v18M5 8l7-5 7 5M3 8h4v9a2 2 0 01-2 2H3a2 2 0 01-2-2V8zM17 8h4v9a2 2 0 01-2 2h-2a2 2 0 01-2-2V8z"/></svg>',
+  accounts:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="6" width="20" height="14" rx="2"/><path d="M2 10h20M6 15h4"/></svg>',
+  invest:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 17l6-6 4 4 8-8M21 7v6M21 7h-6"/></svg>',
+  pension:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/></svg>',
+  cash:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="3"/></svg>',
+  property:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/></svg>',
+  debt:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 6h18M3 12h18M3 18h10"/></svg>',
+  protection:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2l8 3.5v6c0 5-3.4 8.7-8 10.5-4.6-1.8-8-5.5-8-10.5v-6L12 2z"/><path d="M9 12l2 2 4-4"/></svg>',
+  tax:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 2h6l5 5v13a2 2 0 01-2 2H9a2 2 0 01-2-2V4a2 2 0 012-2z"/><path d="M9 12h6M9 16h4"/></svg>',
+  docs:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6"/></svg>',
+  assistant:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3a5 5 0 015 5v2a5 5 0 01-10 0V8a5 5 0 015-5z"/><path d="M8 13v1a4 4 0 008 0v-1M12 18v3M9 21h6"/></svg>',
+  markets:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 3v18h18"/><path d="M7 15l4-5 3 3 5-7"/></svg>',
+  goals:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/></svg>',
+  insights:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 3H5a2 2 0 00-2 2v4M15 3h4a2 2 0 012 2v4M9 21H5a2 2 0 01-2-2v-4M15 21h4a2 2 0 002-2v-4"/><path d="M8 12h8M12 8v8"/></svg>',
+  close:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M18 6L6 18M6 6l12 12"/></svg>',
+  star:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2l3.1 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.8 21l1.2-6.8-5-4.9 6.9-1L12 2z"/></svg>',
+  scale:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3v18M5 8l-3 6a4 4 0 008 0l-3-6M19 8l-3 6a4 4 0 008 0l-3-6M5 8h14M8 21h8"/></svg>',
+};
+
+const NAV = [
+  {group:'Command centre', items:[
+    {id:'overview', label:'Home', icon:'overview'},
+    {id:'mywealth', label:'My wealth', icon:'balance'},
+    {id:'markets', label:'Markets', icon:'markets'},
+  ]},
+  {group:'Wealth', items:[
+    {id:'invest', label:'Investments', icon:'invest'},
+    {id:'pension', label:'Pensions', icon:'pension'},
+    {id:'cash', label:'Cash & savings', icon:'cash'},
+    {id:'property', label:'Property', icon:'property'},
+  ]},
+  {group:'Obligations', items:[
+    {id:'debt', label:'Debt', icon:'debt'},
+    {id:'protection', label:'Protection', icon:'protection'},
+    {id:'tax', label:'Tax', icon:'tax'},
+  ]},
+  {group:'Planning', items:[
+    {id:'goals', label:'Goals', icon:'goals'},
+    {id:'insights', label:'Insights', icon:'insights'},
+  ]},
+  {group:'Records', items:[
+    {id:'docs', label:'Documents', icon:'docs'},
+    {id:'assistant', label:'AI', icon:'assistant'},
+  ]},
+];
+
+const BOTTOM_NAV = [
+  {id:'overview', label:'Home', icon:'overview'},
+  {id:'mywealth', label:'Wealth', icon:'balance'},
+  {id:'markets', label:'Markets', icon:'markets'},
+  {id:'insights', label:'Insights', icon:'insights'},
+  {id:'assistant', label:'AI', icon:'assistant'},
+];
+
+/* legacy nav ids from earlier version — keep old links/bookmarks working */
+const LEGACY_SECTION = {balance:'mywealth', accounts:'mywealth'};
+
+/* ---------------- mock data ---------------- */
+const D = {
+  user:{name:'Alex Morgan', age:42, salary:120000},
+  netWorth:1284620,
+  netWorthDelta:{pct:8.4, abs:99870},
+  snapshot:[
+    {label:'Cash', value:84250, icon:'cash'},
+    {label:'Investments', value:426840, icon:'invest'},
+    {label:'Pensions', value:483530, icon:'pension'},
+    {label:'Property', value:620000, icon:'property'},
+    {label:'Other assets', value:20000, icon:'debt'},
+    {label:'Liabilities', value:-350000, icon:'debt'},
+  ],
+  nwSeries:{
+    '1M':[1258,1261,1259,1264,1268,1266,1271,1275,1273,1278,1281,1284620/1000],
+    '3M':[1201,1215,1224,1218,1233,1241,1256,1249,1262,1271,1278,1284.62],
+    '1Y':[1122,1138,1145,1160,1152,1171,1189,1198,1210,1231,1256,1284.62],
+    '3Y':[860,910,940,905,980,1035,1070,1040,1120,1180,1230,1284.62],
+    '5Y':[640,700,760,730,800,860,920,980,1040,1120,1200,1284.62],
+    'All':[410,520,610,700,760,830,900,980,1060,1140,1210,1284.62],
+  },
+  health:{score:82, parts:[
+    {name:'Liquidity',v:82},{name:'Debt',v:76},{name:'Diversification',v:74},
+    {name:'Retirement readiness',v:88},{name:'Cashflow',v:91},{name:'Protection',v:67},{name:'Financial organisation',v:94},
+  ]},
+  whatChanged:[
+    {label:'Net worth', delta:'+£8,240', dir:'up'},
+    {label:'Investments', delta:'+1.8%', dir:'up'},
+    {label:'Cash', delta:'−£2,100', dir:'down'},
+    {label:'Pension', delta:'+£4,600', dir:'up'},
+    {label:'Debt', delta:'−£850', dir:'up'},
+    {label:'Dividend income', delta:'+£320', dir:'up'},
+  ],
+  upcoming:[
+    {date:'28 Aug', text:'Mortgage payment due — £1,890'},
+    {date:'1 Sep', text:'ISA contribution scheduled — £1,000'},
+    {date:'12 Sep', text:'Home insurance renewal'},
+  ],
+  timeline:[
+    {date:'AUG 2026', text:'Net worth crossed £1.28m', tag:'Net worth'},
+    {date:'JUN 2026', text:'£2,500 dividend income received across 4 holdings', tag:'Investment'},
+    {date:'MAR 2026', text:'£10,000 lump sum contribution to Stocks & Shares ISA', tag:'Investment'},
+    {date:'JAN 2026', text:'£5,000 additional voluntary pension contribution', tag:'Pension'},
+    {date:'NOV 2025', text:'Fixed-rate mortgage renewed at 4.29%', tag:'Debt'},
+    {date:'SEP 2025', text:'Started new role — salary revised to £120,000', tag:'Income'},
+  ],
+  connections:[
+    {provider:'Provider A', kind:'Current account · Banking', updated:'2 minutes ago', status:'connected'},
+    {provider:'Provider B', kind:'Stocks & Shares ISA · Investing', updated:'14 minutes ago', status:'connected'},
+    {provider:'Provider C', kind:'Workplace pension · Pension', updated:'1 hour ago', status:'connected'},
+    {provider:'Provider D', kind:'Mortgage · Property', updated:'Yesterday', status:'connected'},
+    {provider:'Provider E', kind:'SIPP · Pension', updated:'3 hours ago', status:'connected'},
+    {provider:'Provider F', kind:'Easy-access savings · Banking', updated:'6 hours ago', status:'connected'},
+    {provider:'Provider G', kind:'Life insurance · Protection', updated:'2 days ago', status:'connected'},
+    {provider:'Provider H', kind:'Fund platform · Investing', updated:'22 minutes ago', status:'connected'},
+  ],
+  accountsTable:[
+    {provider:'Provider A', account:'Everyday current account', type:'Banking', balance:18400, rate:'1.1%', updated:'2 min ago'},
+    {provider:'Provider F', account:'Easy-access savings', type:'Banking', balance:42300, rate:'4.35%', updated:'6 hrs ago'},
+    {provider:'Provider A', account:'95-day notice account', type:'Banking', balance:15000, rate:'4.65%', updated:'1 day ago'},
+    {provider:'Provider F', account:'1-year fixed term', type:'Banking', balance:8550, rate:'4.9%', updated:'1 day ago'},
+    {provider:'Provider B', account:'Stocks & Shares ISA', type:'ISA', balance:214300, rate:'—', updated:'14 min ago'},
+    {provider:'Provider H', account:'General investment account', type:'Investment', balance:212540, rate:'—', updated:'22 min ago'},
+    {provider:'Provider C', account:'Workplace pension (DC)', type:'Pension', balance:280000, rate:'—', updated:'1 hr ago'},
+    {provider:'Provider E', account:'SIPP', type:'Pension', balance:120000, rate:'—', updated:'3 hrs ago'},
+    {provider:'Provider E', account:'Personal pension', type:'Pension', balance:83530, rate:'—', updated:'3 hrs ago'},
+    {provider:'Provider D', account:'Residential mortgage', type:'Credit', balance:-350000, rate:'4.29%', updated:'Yesterday'},
+  ],
+  holdings:[
+    {name:'Apple Inc.', type:'Equity', region:'US', provider:'Provider H', value:18200, gain:3320, ret:22.4},
+    {name:'Microsoft Corp.', type:'Equity', region:'US', provider:'Provider H', value:24600, gain:4110, ret:20.1},
+    {name:'Nvidia Corp.', type:'Equity', region:'US', provider:'Provider H', value:15800, gain:6920, ret:78.2},
+    {name:'Vanguard S&P 500 ETF', type:'ETF', region:'US', provider:'Provider B', value:86300, gain:11000, ret:14.6},
+    {name:'iShares Core MSCI World ETF', type:'ETF', region:'Global', provider:'Provider B', value:58900, gain:6640, ret:12.7},
+    {name:'FTSE 100 ETF', type:'ETF', region:'UK', provider:'Provider H', value:31900, gain:2260, ret:7.6},
+    {name:'Global Equity Fund', type:'Fund', region:'Global', provider:'Provider H', value:72500, gain:7340, ret:11.2},
+    {name:'European Equity Fund', type:'Fund', region:'Europe', provider:'Provider B', value:24300, gain:1580, ret:6.9},
+    {name:'Emerging Markets Fund', type:'Fund', region:'EM', provider:'Provider H', value:18940, gain:-620, ret:-3.2},
+    {name:'UK Gilt 2030', type:'Gilt', region:'UK', provider:'Provider B', value:35000, gain:1280, ret:3.8},
+    {name:'UK Corporate Bond Fund', type:'Bond fund', region:'UK', provider:'Provider H', value:23100, gain:410, ret:1.8},
+    {name:'Global REIT Fund', type:'REIT', region:'Global', provider:'Provider H', value:17300, gain:-340, ret:-1.9},
+  ],
+  allocation:[
+    {label:'US equities',v:38,color:'#9c6b2e'},{label:'UK equities',v:12,color:'#3f8f65'},
+    {label:'Global funds',v:20,color:'#3f6fa8'},{label:'Bonds & gilts',v:14,color:'#7a6bab'},
+    {label:'Europe & EM',v:10,color:'#b23f30'},{label:'Property (REIT)',v:6,color:'#9c9686'},
+  ],
+  funds:[
+    {name:'Vanguard S&P 500 ETF', charge:'0.07%', platform:'0.15%', income:'1.3% yield', risk:'6/7'},
+    {name:'iShares Core MSCI World ETF', charge:'0.20%', platform:'0.15%', income:'1.6% yield', risk:'6/7'},
+    {name:'Global Equity Fund', charge:'0.85%', platform:'0.25%', income:'1.1% yield', risk:'5/7'},
+    {name:'UK Corporate Bond Fund', charge:'0.55%', platform:'0.25%', income:'3.9% yield', risk:'3/7'},
+  ],
+  isa:{allowance:20000, used:12400},
+  bonds:[
+    {name:'UK Gilt 2027', face:10000, value:9820, coupon:'1.75%', yield:'4.1%', maturity:2027},
+    {name:'UK Gilt 2030', face:25000, value:25100, coupon:'4.25%', yield:'4.0%', maturity:2030},
+    {name:'Corporate Bond 2032', face:15000, value:14680, coupon:'3.5%', yield:'4.4%', maturity:2032},
+  ],
+  pensions:{
+    total:483530,
+    parts:[{label:'Workplace pension',value:280000},{label:'SIPP',value:120000},{label:'Personal pension',value:83530}],
+    statePension:{weekly:221.20, age:68, status:'estimated'},
+  },
+  cashAccounts:[
+    {name:'Everyday current account', provider:'Provider A', balance:18400, rate:'1.1%', maturity:'—'},
+    {name:'Easy-access savings', provider:'Provider F', balance:42300, rate:'4.35%', maturity:'—'},
+    {name:'95-day notice account', provider:'Provider A', balance:15000, rate:'4.65%', maturity:'—'},
+    {name:'1-year fixed term', provider:'Provider F', balance:8550, rate:'4.90%', maturity:'Mar 2027'},
+  ],
+  property:{
+    value:620000, mortgage:350000, equity:270000, rate:'4.29%', term:'22 yrs remaining', type:'Main residence',
+  },
+  debt:{
+    total:350000, monthly:2420, avgRate:4.1, freeDate:2039,
+    items:[{name:'Residential mortgage', balance:350000, rate:'4.29%', payment:1890}],
+    timeline:[{year:2027,v:335000},{year:2030,v:298000},{year:2033,v:248000},{year:2036,v:172000},{year:2039,v:0}],
+  },
+  insurance:{
+    totalPremium:3420, totalLifeCover:750000,
+    policies:[
+      {type:'Life insurance', provider:'Provider G', premium:820, cover:'£500,000', renewal:'12 Sep 2026'},
+      {type:'Critical illness', provider:'Provider G', premium:640, cover:'£250,000', renewal:'12 Sep 2026'},
+      {type:'Income protection', provider:'Provider I', premium:560, cover:'£4,500/mo', renewal:'3 Feb 2027'},
+      {type:'Private medical', provider:'Provider J', premium:940, cover:'Comprehensive', renewal:'18 Jun 2027'},
+      {type:'Home insurance', provider:'Provider D', premium:310, cover:'£620,000 buildings', renewal:'12 Sep 2026'},
+      {type:'Motor insurance', provider:'Provider K', premium:150, cover:'Comprehensive', renewal:'4 Apr 2027'},
+    ],
+  },
+  tax:{
+    year:'2026/27',
+    income:120000, interest:3200, dividends:6400, pensionContrib:25000, isaContrib:12400, gains:4800,
+    monthlyIncome:[{m:'Sep',v:9800},{m:'Oct',v:9800},{m:'Nov',v:9800},{m:'Dec',v:11200},{m:'Jan',v:9800},{m:'Feb',v:9800},{m:'Mar',v:9800},{m:'Apr',v:10500},{m:'May',v:10500},{m:'Jun',v:10500},{m:'Jul',v:10500},{m:'Aug',v:10500}],
+  },
+  cashflow:{
+    monthlyIncome:10500, monthlySpend:6200,
+    spend:[{label:'Housing',v:1890},{label:'Food',v:640},{label:'Transport',v:410},{label:'Utilities',v:280},{label:'Subscriptions',v:120},{label:'Insurance',v:285},{label:'Debt',v:0},{label:'Discretionary',v:2575}],
+  },
+  documents:[
+    {name:'Mortgage statement — Jul 2026', cat:'Property', date:'2 Aug 2026'},
+    {name:'ISA statement — Q2 2026', cat:'Investments', date:'14 Jul 2026'},
+    {name:'Workplace pension statement — 2025', cat:'Pensions', date:'30 Jan 2026'},
+    {name:'P60 — tax year 2025/26', cat:'Tax', date:'22 May 2026'},
+    {name:'Life insurance policy schedule', cat:'Insurance', date:'12 Sep 2025'},
+    {name:'Property valuation report', cat:'Property', date:'3 Jun 2025'},
+    {name:'SIPP annual statement — 2025', cat:'Pensions', date:'18 Apr 2026'},
+    {name:'Employment contract', cat:'Employment', date:'1 Sep 2025'},
+  ],
+  notifications:[
+    {text:'Pension statement received from Provider C', time:'2h ago', kind:'gold'},
+    {text:'Home insurance renews in 30 days', time:'6h ago', kind:'blue'},
+    {text:'1-year fixed savings matures in 14 days — Provider F', time:'1d ago', kind:'blue'},
+    {text:'Dividend received — £320 across 3 holdings', time:'2d ago', kind:'green'},
+    {text:'Large transaction detected — £4,200 transfer', time:'3d ago', kind:'neutral'},
+    {text:'Investment account hasn\'t refreshed in 6 days — Provider H', time:'4d ago', kind:'red'},
+  ],
+
+  /* ---------- Financial X-Ray ---------- */
+  xray:[
+    {label:'Investment concentration', value:'31% exposure to US technology across equities and funds.'},
+    {label:'Geographic exposure', value:'56% North America, 18% UK, 14% global/diversified, 12% Europe & emerging markets.'},
+    {label:'Sector exposure', value:'Technology is the largest single sector at 27% of invested wealth.'},
+    {label:'Fund & platform fees', value:'Approximately £1,940/year (0.45%) in tracked investment and platform charges.'},
+    {label:'Pension charges', value:'Workplace pension charges 0.38% annually; SIPP charges 0.45%.'},
+    {label:'Cash concentration', value:'£84,250 held in cash, 6.6% of net worth — above a typical 3–6 month expense buffer.'},
+    {label:'Liquidity', value:'£511,090 potentially accessible before retirement, subject to account restrictions and notice periods.'},
+    {label:'Retirement exposure', value:'37% of total net worth is held in pensions and locked until at least age 57.'},
+    {label:'Property exposure', value:'21% of net worth is property equity, concentrated in a single residential asset.'},
+    {label:'Debt concentration', value:'100% of tracked debt is the residential mortgage at a 4.29% fixed rate.'},
+    {label:'Insurance coverage', value:'£750,000 total life cover against a net worth of £1.28m and estimated future income needs.'},
+    {label:'Income dependence', value:'93% of annual income comes from a single employer.'},
+    {label:'Tax-wrapper usage', value:'£214,300 of £426,840 invested wealth (50%) sits inside tax-advantaged wrappers (ISA/pension).'},
+    {label:'Upcoming financial events', value:'Fixed savings maturity in 14 days; home insurance renewal in 30 days.'},
+  ],
+
+  /* ---------- Life events ---------- */
+  lifeEvents:[
+    {id:'house', name:'Buying a house', icon:'property', desc:'Model a property purchase alongside your existing mortgage and cash position.',
+      impact:{cash:-60000, investments:0, pension:0, debt:280000, property:400000, netWorth:20000}},
+    {id:'marriage', name:'Getting married', icon:'protection', desc:'Combine finances, update beneficiaries, and factor in a wedding cost.',
+      impact:{cash:-18000, investments:0, pension:0, debt:0, property:0, netWorth:-18000}},
+    {id:'child', name:'Having a child', icon:'goals', desc:'Ongoing costs plus a reassessment of protection and education saving.',
+      impact:{cash:-4000, investments:-2000, pension:0, debt:0, property:0, netWorth:-6000}},
+    {id:'jobchange', name:'Changing jobs', icon:'accounts', desc:'A new salary, new pension scheme, and a possible contribution gap.',
+      impact:{cash:2000, investments:0, pension:-1500, debt:0, property:0, netWorth:500}},
+    {id:'jobloss', name:'Losing a job', icon:'debt', desc:'Income stops; models drawing down cash reserves over a job search.',
+      impact:{cash:-15000, investments:0, pension:0, debt:0, property:0, netWorth:-15000}},
+    {id:'business', name:'Starting a business', icon:'invest', desc:'Capital injection from personal savings and investments into a new venture.',
+      impact:{cash:-30000, investments:-20000, pension:0, debt:0, property:0, netWorth:-50000}},
+    {id:'abroad', name:'Moving abroad', icon:'markets', desc:'Property let out, tax residency change, and new cost of living.',
+      impact:{cash:5000, investments:0, pension:0, debt:0, property:0, netWorth:5000}},
+    {id:'education', name:'Paying for education', icon:'goals', desc:'A lump sum or ongoing drawdown to fund school or university fees.',
+      impact:{cash:-25000, investments:-10000, pension:0, debt:0, property:0, netWorth:-35000}},
+    {id:'earlyret', name:'Early retirement', icon:'pension', desc:'Stop working ahead of schedule; pot needs to last longer.',
+      impact:{cash:-10000, investments:-40000, pension:0, debt:0, property:0, netWorth:-50000}},
+    {id:'retirement', name:'Normal retirement', icon:'pension', desc:'Transition from accumulation to drawing a retirement income.',
+      impact:{cash:0, investments:0, pension:-30000, debt:0, property:0, netWorth:-30000}},
+    {id:'inheritance', name:'Inheritance', icon:'estate', desc:'A lump sum received, potentially subject to inheritance tax.',
+      impact:{cash:80000, investments:0, pension:0, debt:0, property:0, netWorth:80000}},
+    {id:'majorpurchase', name:'Major purchase', icon:'cash', desc:'A large one-off cost such as a car or renovation.',
+      impact:{cash:-25000, investments:0, pension:0, debt:0, property:0, netWorth:-25000}},
+  ],
+
+  /* ---------- Goals ---------- */
+  goals:[
+    {name:'£1m net worth', current:1284620, target:1000000, achieved:true, projectedDate:'Achieved Mar 2025', monthly:0},
+    {name:'Retire at 60', current:483530, target:1100000, achieved:false, projectedDate:'On track for Sep 2044', monthly:1850},
+    {name:'Build £100k emergency fund', current:84250, target:100000, achieved:false, projectedDate:'Feb 2027', monthly:1200},
+    {name:'Pay off mortgage', current:270000, target:620000, achieved:false, projectedDate:'2039', monthly:1890, note:'Progress shown as equity built vs property value'},
+    {name:'Generate £50k annual investment income', current:8420, target:50000, achieved:false, projectedDate:'~2041 at current pace', monthly:0},
+    {name:"Fund children's education", current:6200, target:60000, achieved:false, projectedDate:'2038', monthly:350},
+  ],
+
+  /* ---------- Wealth generation waterfall ---------- */
+  wealthGen:{
+    start:1187200,
+    steps:[
+      {label:'Investment growth', value:52400},
+      {label:'Pension contributions', value:31200},
+      {label:'Property appreciation', value:18000},
+      {label:'Savings', value:20820},
+      {label:'Spending & debt effects', value:-25000},
+    ],
+    end:1284620,
+  },
+
+  /* ---------- Financial calendar ---------- */
+  calendar:[
+    {date:'2026-08-28', text:'Mortgage payment', cat:'Debt'},
+    {date:'2026-09-01', text:'ISA contribution scheduled', cat:'Investment'},
+    {date:'2026-09-12', text:'Home & life insurance renewal', cat:'Insurance'},
+    {date:'2026-09-25', text:'Salary payment', cat:'Income'},
+    {date:'2026-09-28', text:'Mortgage payment', cat:'Debt'},
+    {date:'2026-10-01', text:'Dividend payment — Vanguard S&P 500 ETF', cat:'Investment'},
+    {date:'2026-10-15', text:'RSU vesting — 120 shares', cat:'Investment'},
+    {date:'2026-10-25', text:'Salary payment', cat:'Income'},
+    {date:'2027-01-31', text:'Self-assessment tax deadline', cat:'Tax'},
+    {date:'2027-03-05', text:'ISA allowance deadline — tax year end', cat:'Tax'},
+    {date:'2027-03-15', text:'1-year fixed savings matures — Provider F', cat:'Cash'},
+    {date:'2027-04-06', text:'New tax year begins', cat:'Tax'},
+  ],
+
+  /* ---------- Household ---------- */
+  household:{
+    members:[
+      {name:'Alex Morgan', netWorth:1284620, role:'You', access:'Full access'},
+      {name:'Partner', netWorth:620000, role:'Partner', access:'Shared — view only'},
+    ],
+    joint:340000,
+  },
+
+  /* ---------- Employee equity ---------- */
+  employeeEquity:[
+    {type:'RSUs', vested:145000, unvested:210000, nextVest:'15 Oct 2026', shares:480, price:'£68.20', concentration:'12% of net worth'},
+    {type:'ESPP', vested:22400, unvested:8600, nextVest:'31 Dec 2026', shares:60, price:'£68.20', concentration:'1.7% of net worth'},
+    {type:'SAYE options', vested:0, unvested:14000, nextVest:'1 Jun 2028', shares:120, price:'Strike £42.00', concentration:'1.1% of net worth'},
+  ],
+
+  /* ---------- Estate & beneficiaries ---------- */
+  estate:{
+    estateValue:1284620,
+    willStatus:'Will in place — last updated Feb 2024',
+    records:[
+      {item:'Workplace pension', beneficiary:'Partner (100%)'},
+      {item:'SIPP', beneficiary:'Partner (100%)'},
+      {item:'Life insurance — Provider G', beneficiary:'Partner (100%)'},
+      {item:'Main residence', beneficiary:'Per will'},
+    ],
+  },
+};
+
+/* ================================================================
+   MARKETS & PRODUCTS INTELLIGENCE — a separate, provider-neutral
+   universe of instruments. The customer does not need to own an
+   asset for it to appear here. All data is fictional and for
+   prototype purposes only.
+   ================================================================ */
+const MARKET = {
+  updated:'23 Aug 2026, 17:45',
+  indices:[
+    {name:'FTSE 100', value:8342.6, day:0.42, week:1.1, ytd:6.8},
+    {name:'S&P 500', value:6187.3, day:0.68, week:1.8, ytd:14.2},
+    {name:'NASDAQ', value:20431.9, day:0.91, week:2.3, ytd:18.6},
+    {name:'Euro Stoxx 50', value:5124.8, day:-0.18, week:0.4, ytd:9.1},
+    {name:'Nikkei 225', value:41230.5, day:0.25, week:-0.6, ytd:11.4},
+    {name:'Gold (oz)', value:2612.4, day:0.12, week:0.9, ytd:22.7},
+    {name:'Brent Crude', value:74.8, day:-0.55, week:-1.4, ytd:-6.2},
+    {name:'GBP/USD', value:1.2734, day:0.08, week:0.3, ytd:2.1},
+    {name:'GBP/EUR', value:1.1682, day:-0.04, week:0.1, ytd:0.6},
+    {name:'Bitcoin', value:98230, day:1.9, week:4.2, ytd:41.3},
+  ],
+  instruments:[
+    {id:'aapl', type:'Stock', name:'Apple Inc.', ticker:'AAPL', region:'US', sector:'Technology', price:227.40, day:0.8, week:1.4, ytd:24.1, y1:24.1, y3:61.2, y5:186.4, marketCap:'£2.8tn', pe:31.2, divYield:0.5, owned:true, ownedValue:18200},
+    {id:'msft', type:'Stock', name:'Microsoft Corp.', ticker:'MSFT', region:'US', sector:'Technology', price:441.10, day:0.6, week:1.1, ytd:20.8, y1:20.8, y3:58.7, y5:210.3, marketCap:'£3.1tn', pe:34.5, divYield:0.7, owned:true, ownedValue:24600},
+    {id:'nvda', type:'Stock', name:'Nvidia Corp.', ticker:'NVDA', region:'US', sector:'Technology', price:138.70, day:2.1, week:5.6, ytd:78.2, y1:78.2, y3:612.0, y5:2840.0, marketCap:'£2.6tn', pe:52.1, divYield:0.03, owned:true, ownedValue:15800},
+    {id:'amzn', type:'Stock', name:'Amazon.com Inc.', ticker:'AMZN', region:'US', sector:'Consumer', price:198.30, day:0.4, week:0.9, ytd:16.3, y1:16.3, y3:44.0, y5:98.2, marketCap:'£1.9tn', pe:38.9, divYield:0, owned:false},
+    {id:'goog', type:'Stock', name:'Alphabet Inc.', ticker:'GOOGL', region:'US', sector:'Communication', price:176.50, day:0.3, week:1.6, ytd:19.4, y1:19.4, y3:52.1, y5:132.0, marketCap:'£1.7tn', pe:26.8, divYield:0.4, owned:false},
+    {id:'jnj', type:'Stock', name:'Johnson & Johnson', ticker:'JNJ', region:'US', sector:'Healthcare', price:158.20, day:-0.2, week:0.3, ytd:4.1, y1:4.1, y3:9.8, y5:22.0, marketCap:'£340bn', pe:15.4, divYield:3.2, owned:false},
+    {id:'hsba', type:'Stock', name:'HSBC Holdings', ticker:'HSBA', region:'UK', sector:'Financials', price:742.10, day:0.15, week:0.8, ytd:11.2, y1:11.2, y3:38.4, y5:26.1, marketCap:'£146bn', pe:9.1, divYield:6.1, owned:false},
+    {id:'shel', type:'Stock', name:'Shell plc', ticker:'SHEL', region:'UK', sector:'Energy', price:2712.5, day:-0.4, week:-1.1, ytd:3.6, y1:3.6, y3:21.0, y5:64.2, marketCap:'£172bn', pe:11.3, divYield:4.0, owned:false},
+    {id:'ulvr', type:'Stock', name:'Unilever plc', ticker:'ULVR', region:'UK', sector:'Consumer', price:4380.0, day:0.1, week:0.5, ytd:8.9, y1:8.9, y3:19.2, y5:31.5, marketCap:'£112bn', pe:19.6, divYield:3.3, owned:false},
+    {id:'asml', type:'Stock', name:'ASML Holding', ticker:'ASML', region:'Europe', sector:'Technology', price:712.4, day:1.2, week:2.8, ytd:9.7, y1:9.7, y3:48.3, y5:210.0, marketCap:'£280bn', pe:33.7, divYield:0.9, owned:false},
+    {id:'nesn', type:'Stock', name:'Nestlé SA', ticker:'NESN', region:'Europe', sector:'Consumer', price:82.4, day:-0.1, week:0.2, ytd:-3.4, y1:-3.4, y3:-8.1, y5:4.2, marketCap:'£196bn', pe:17.9, divYield:3.6, owned:false},
+    {id:'tsmc', type:'Stock', name:'Taiwan Semiconductor', ticker:'TSM', region:'Asia', sector:'Technology', price:198.6, day:1.5, week:3.2, ytd:52.4, y1:52.4, y3:180.2, y5:410.6, marketCap:'£820bn', pe:28.4, divYield:1.4, owned:false},
+
+    {id:'f-global-eq', type:'Fund', name:'Global Equity Fund', provider:'Provider H', isin:'GB00B0000001', category:'Global equity', currency:'GBP', nav:2.184, y1:11.2, y3:38.6, y5:74.1, charge:0.85, risk:'5/7', size:'£4.2bn', owned:true, ownedValue:72500},
+    {id:'f-eu-eq', type:'Fund', name:'European Equity Fund', provider:'Provider B', isin:'GB00B0000002', category:'Europe equity', currency:'GBP', nav:1.762, y1:6.9, y3:21.4, y5:39.8, charge:0.92, risk:'5/7', size:'£1.1bn', owned:true, ownedValue:24300},
+    {id:'f-em-eq', type:'Fund', name:'Emerging Markets Fund', provider:'Provider H', isin:'GB00B0000003', category:'Emerging markets', currency:'GBP', nav:1.340, y1:-3.2, y3:9.7, y5:28.3, charge:1.05, risk:'6/7', size:'£680m', owned:true, ownedValue:18940},
+    {id:'f-uk-corp', type:'Fund', name:'UK Corporate Bond Fund', provider:'Provider H', isin:'GB00B0000004', category:'UK bonds', currency:'GBP', nav:0.982, y1:1.8, y3:6.2, y5:11.4, charge:0.55, risk:'3/7', size:'£2.0bn', owned:true, ownedValue:23100},
+    {id:'f-uk-idx', type:'Fund', name:'UK All-Share Index Fund', provider:'Provider H', isin:'GB00B0000005', category:'UK equity', currency:'GBP', nav:3.410, y1:9.4, y3:24.1, y5:41.2, charge:0.15, risk:'5/7', size:'£3.6bn', owned:false},
+    {id:'f-us-idx', type:'Fund', name:'US Index Fund', provider:'Provider B', isin:'GB00B0000006', category:'US equity', currency:'GBP', nav:5.120, y1:22.8, y3:64.0, y5:189.0, charge:0.10, risk:'6/7', size:'£8.9bn', owned:false},
+    {id:'f-multi', type:'Fund', name:'Multi-Asset Balanced Fund', provider:'Provider C', isin:'GB00B0000007', category:'Multi-asset', currency:'GBP', nav:1.890, y1:7.1, y3:19.8, y5:33.6, charge:0.65, risk:'4/7', size:'£1.8bn', owned:false},
+    {id:'f-esg', type:'Fund', name:'Sustainable Global Fund', provider:'Provider H', isin:'GB00B0000008', category:'ESG global equity', currency:'GBP', nav:1.610, y1:8.9, y3:26.4, y5:48.9, charge:0.78, risk:'5/7', size:'£920m', owned:false},
+    {id:'f-tech', type:'Fund', name:'Global Technology Fund', provider:'Provider B', isin:'GB00B0000009', category:'Sector — technology', currency:'GBP', nav:4.280, y1:31.6, y3:112.0, y5:298.0, charge:0.95, risk:'6/7', size:'£2.4bn', owned:false},
+    {id:'f-mmf', type:'Fund', name:'Sterling Money Market Fund', provider:'Provider F', isin:'GB00B0000010', category:'Money market', currency:'GBP', nav:1.002, y1:4.6, y3:11.8, y5:14.2, charge:0.12, risk:'1/7', size:'£5.1bn', owned:false},
+  ],
+  etfs:[
+    {id:'e-sp500', type:'ETF', name:'Vanguard S&P 500 ETF', provider:'Provider B', ticker:'VUSA', aum:'£58bn', charge:0.07, spread:0.02, y1:14.6, y3:54.1, y5:132.4, divYield:1.3, owned:true, ownedValue:86300},
+    {id:'e-world', type:'ETF', name:'iShares Core MSCI World ETF', provider:'Provider B', ticker:'IWDA', aum:'£82bn', charge:0.20, spread:0.02, y1:12.7, y3:44.0, y5:104.1, divYield:1.6, owned:true, ownedValue:58900},
+    {id:'e-ftse', type:'ETF', name:'FTSE 100 ETF', provider:'Provider H', ticker:'ISF', aum:'£9bn', charge:0.07, spread:0.03, y1:7.6, y3:22.4, y5:29.8, divYield:3.5, owned:true, ownedValue:31900},
+    {id:'e-gold', type:'ETF', name:'Physical Gold ETC', provider:'Provider F', ticker:'SGLN', aum:'£14bn', charge:0.12, spread:0.05, y1:22.7, y3:41.0, y5:78.4, divYield:0, owned:false},
+    {id:'e-em', type:'ETF', name:'Emerging Markets ETF', provider:'Provider H', ticker:'EMIM', aum:'£18bn', charge:0.18, spread:0.04, y1:6.1, y3:17.3, y5:33.6, divYield:2.4, owned:false},
+    {id:'e-div', type:'ETF', name:'Global High Dividend ETF', provider:'Provider B', ticker:'VHYL', aum:'£4bn', charge:0.29, spread:0.06, y1:9.8, y3:28.9, y5:52.1, divYield:3.8, owned:false},
+    {id:'e-clean', type:'ETF', name:'Clean Energy ETF', provider:'Provider C', ticker:'INRG', aum:'£1.2bn', charge:0.65, spread:0.12, y1:-8.4, y3:-22.1, y5:18.6, divYield:0.6, owned:false},
+  ],
+  bonds:[
+    {id:'b-gilt27', type:'Bond', name:'UK Gilt 2027', issuer:'UK Government', coupon:1.75, yield:4.1, maturity:2027, price:98.2, rating:'AA', duration:0.7, owned:true, ownedValue:9820},
+    {id:'b-gilt30', type:'Bond', name:'UK Gilt 2030', issuer:'UK Government', coupon:4.25, yield:4.0, maturity:2030, price:100.4, rating:'AA', duration:3.4, owned:true, ownedValue:25100},
+    {id:'b-corp32', type:'Bond', name:'Corporate Bond 2032', issuer:'Investment-grade corporate', coupon:3.5, yield:4.4, maturity:2032, price:97.9, rating:'A', duration:5.6, owned:true, ownedValue:14680},
+    {id:'b-gilt29', type:'Bond', name:'UK Gilt 2029', issuer:'UK Government', coupon:0.875, yield:3.9, maturity:2029, price:94.1, rating:'AA', duration:2.6, owned:false},
+    {id:'b-corp35', type:'Bond', name:'Corporate Bond 2035', issuer:'Investment-grade corporate', coupon:4.1, yield:4.7, maturity:2035, price:96.5, rating:'BBB', duration:7.8, owned:false},
+    {id:'b-hy31', type:'Bond', name:'High Yield Bond 2031', issuer:'Sub-investment-grade corporate', coupon:6.8, yield:7.9, maturity:2031, price:101.2, rating:'BB', duration:4.1, owned:false},
+  ],
+  pensionFunds:[
+    {id:'p-default', type:'Pension fund', name:'Default Workplace Growth Fund', provider:'Provider C', category:'Default / multi-asset', y1:9.8, y3:28.4, charge:0.38, risk:'4/7', availableInMyPension:true, owned:true, ownedValue:280000},
+    {id:'p-global', type:'Pension fund', name:'Global Equity Pension Fund', provider:'Provider E', category:'Global equity', y1:12.1, y3:41.2, charge:0.45, risk:'5/7', availableInMyPension:true, owned:false},
+    {id:'p-us', type:'Pension fund', name:'US Equity Pension Fund', provider:'Provider E', category:'US equity', y1:20.4, y3:60.8, charge:0.42, risk:'6/7', availableInMyPension:true, owned:false},
+    {id:'p-uk', type:'Pension fund', name:'UK Equity Pension Fund', provider:'Provider C', category:'UK equity', y1:8.6, y3:22.0, charge:0.40, risk:'5/7', availableInMyPension:true, owned:false},
+    {id:'p-bond', type:'Pension fund', name:'Pension Bond Fund', provider:'Provider C', category:'Bonds', y1:2.1, y3:7.4, charge:0.30, risk:'2/7', availableInMyPension:true, owned:false},
+    {id:'p-cash', type:'Pension fund', name:'Pension Cash Fund', provider:'Provider C', category:'Cash', y1:4.4, y3:10.9, charge:0.15, risk:'1/7', availableInMyPension:true, owned:false},
+    {id:'p-sharia', type:'Pension fund', name:'Sharia-Compliant Global Fund', provider:'Provider E', category:'Sharia-compliant', y1:14.0, y3:46.1, charge:0.55, risk:'5/7', availableInMyPension:false, owned:false},
+    {id:'p-target', type:'Pension fund', name:'Target Retirement 2044 Fund', provider:'Provider C', category:'Target retirement', y1:10.6, y3:32.0, charge:0.35, risk:'4/7', availableInMyPension:true, owned:false},
+    {id:'p-em', type:'Pension fund', name:'Emerging Markets Pension Fund', provider:'Provider E', category:'Emerging markets', y1:4.8, y3:14.2, charge:0.60, risk:'6/7', availableInMyPension:false, owned:false},
+  ],
+  trusts:[
+    {id:'t-global', type:'Investment trust', name:'Global Growth Trust', nav:1240, price:1198, premDisc:-3.4, dividend:1.8, y1:13.2, sector:'Global', owned:false},
+    {id:'t-income', type:'Investment trust', name:'UK Income & Growth Trust', nav:680, price:702, premDisc:3.2, dividend:4.6, y1:8.1, sector:'UK equity income', owned:false},
+    {id:'t-smaller', type:'Investment trust', name:'Smaller Companies Trust', nav:512, price:468, premDisc:-8.6, dividend:2.1, y1:-2.4, sector:'UK smaller companies', owned:false},
+    {id:'t-tech', type:'Investment trust', name:'Technology Innovation Trust', nav:890, price:842, premDisc:-5.4, dividend:0.4, y1:34.6, sector:'Technology', owned:false},
+    {id:'t-infra', type:'Investment trust', name:'Infrastructure Income Trust', nav:132, price:141, premDisc:6.8, dividend:5.9, y1:6.0, sector:'Infrastructure', owned:false},
+  ],
+  reits:[
+    {id:'r-comm', type:'REIT', name:'Commercial Property REIT', sector:'Commercial', yield:5.4, y1:4.8, nav:'£1.02', geography:'UK', owned:false},
+    {id:'r-log', type:'REIT', name:'Logistics & Industrial REIT', sector:'Industrial/logistics', yield:4.1, y1:9.6, nav:'£1.18', geography:'UK', owned:false},
+    {id:'r-res', type:'REIT', name:'Residential REIT', sector:'Residential', yield:3.6, y1:6.2, nav:'£0.94', geography:'UK', owned:false},
+    {id:'r-global', type:'REIT', name:'Global Property Fund', sector:'Diversified', yield:4.4, y1:5.1, nav:'£1.06', geography:'Global', owned:true, ownedValue:17300},
+    {id:'r-health', type:'REIT', name:'Healthcare Property REIT', sector:'Healthcare', yield:5.8, y1:3.2, nav:'£0.88', geography:'UK', owned:false},
+  ],
+  watchlists:{
+    'My Stocks':['aapl','msft','nvda'],
+    'My Funds':['f-global-eq','f-uk-corp'],
+    'Pension Watchlist':['p-global','p-target'],
+    'UK Gilts':['b-gilt27','b-gilt30'],
+    'High Dividend':['hsba','e-div','t-income'],
+    'Growth':['nvda','f-tech','t-tech'],
+    'Funds to Research':['f-esg','f-mmf'],
+  },
+};
+MARKET.all = [].concat(MARKET.instruments, MARKET.etfs, MARKET.bonds, MARKET.pensionFunds, MARKET.trusts, MARKET.reits);
+
+let state = {
+  section:'overview', period:'1Y', invTab:'overview',
+  wealthTab:'balance', insightsTab:'passport',
+  marketTab:'dashboard', marketSearch:'', marketFilter:'All',
+  compare:[], assetModal:null, chatMode:'personal',
+  lifeEventSelected:null, watchlistActive:'My Stocks',
+};
+let charts = {};
+
+function money(n, opts={}){
+  const neg = n<0;
+  const v = Math.abs(Math.round(n));
+  const s = '£' + v.toLocaleString('en-GB');
+  return neg ? '−'+s : s;
+}
+function pctStr(n, decimals=1){
+  const sign = n>0?'+':n<0?'':'';
+  return sign + n.toFixed(decimals) + '%';
+}
+function dirClass(n){ return n>0?'up':n<0?'down':'flat'; }
+function arrow(n){ return n>0?'↑':n<0?'↓':'→'; }
+
+function destroyCharts(){ Object.values(charts).forEach(c=>c && c.destroy && c.destroy()); charts={}; }
+function newChart(ctx, cfg){
+  if(!ctx) return null;
+  if(typeof Chart === 'undefined'){
+    console.warn('Chart.js did not load — showing fallback instead of a chart.');
+    ctx.parentElement.insertAdjacentHTML('beforeend', '<div style="color:var(--text-faint);font-size:12px;padding:10px 0;">Chart unavailable — the charting library did not load. Everything else in the app still works.</div>');
+    return null;
+  }
+  try{ return new Chart(ctx, cfg); }
+  catch(e){ console.warn('Chart render failed:', e); return null; }
+}
+
+/* ---------------- render shell nav ---------------- */
+function renderNav(){
+  const el = document.getElementById('navScroll');
+  el.innerHTML = NAV.map(g=>`
+    <div class="nav-group-label">${g.group}</div>
+    ${g.items.map(it=>`
+      <button class="nav-item ${state.section===it.id?'active':''}" onclick="go('${it.id}')">
+        ${ICONS[it.icon]}<span>${it.label}</span>
+      </button>`).join('')}
+  `).join('');
+
+  const bn = document.getElementById('bottomNav');
+  bn.innerHTML = BOTTOM_NAV.map(it=>`
+    <button class="bn-item ${state.section===it.id?'active':''}" onclick="go('${it.id}')">
+      ${ICONS[it.icon]}<span>${it.label}</span>
+    </button>`).join('');
+}
+
+function go(section){
+  state.section = LEGACY_SECTION[section] || section;
+  closeDrawer();
+  renderNav();
+  renderMain();
+  window.scrollTo({top:0,behavior:'instant'});
+}
+window.go = go;
+
+/* ---------------- mobile drawer ---------------- */
+function openDrawer(){ document.getElementById('sidebar').classList.add('open'); document.getElementById('overlay').classList.add('show'); }
+function closeDrawer(){ document.getElementById('sidebar').classList.remove('open'); document.getElementById('overlay').classList.remove('show'); }
+document.getElementById('hamburger').onclick = openDrawer;
+document.getElementById('overlay').onclick = closeDrawer;
+
+/* ---------------- shared subcomponents ---------------- */
+function statusRow(label='Connected data', dot='connected'){
+  return `<div class="status-row"><span class="status-dot ${dot}"></span>${label}</div>`;
+}
+function dataQualityLegend(){
+  return `<div class="dq-legend">
+    <span><span class="status-dot connected"></span>Connected data</span>
+    <span><span class="status-dot entered"></span>User entered</span>
+    <span><span class="status-dot estimated"></span>Estimated</span>
+    <span><span class="status-dot missing"></span>Missing</span>
+  </div>`;
+}
+function disclaimer(text){
+  return `<div class="disclaimer">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg>
+    <span>${text}</span>
+  </div>`;
+}
+function pageHead(eyebrow,title,desc){
+  return `<div class="page-head">
+    <div class="eyebrow">${eyebrow}</div>
+    <div class="page-title serif">${title}</div>
+    ${desc?`<div class="page-desc">${desc}</div>`:''}
+  </div>`;
+}
+function iconChip(name){ return `<div class="icon-chip">${ICONS[name]||ICONS.cash}</div>`; }
+
+/* ============================================================
+   SECTION RENDERERS
+   ============================================================ */
+
+function renderOverview(){
+  const snap = D.snapshot;
+  return `
+  ${pageHead('Command centre','Your financial life. One view.')}
+
+  <div class="hero card">
+    <div class="hero-top">
+      <div>
+        <div class="hero-label">Total net worth</div>
+        <div class="hero-value mono">${money(D.netWorth)}</div>
+        <div class="hero-line"></div>
+        <div class="hero-delta ${dirClass(D.netWorthDelta.pct)}">${arrow(D.netWorthDelta.pct)} ${pctStr(D.netWorthDelta.pct)} · ${money(D.netWorthDelta.abs)} this period</div>
+      </div>
+      <div class="period-toggle" id="periodToggle">
+        ${['1M','3M','1Y','3Y','5Y','All'].map(p=>`<button class="${state.period===p?'active':''}" data-p="${p}">${p}</button>`).join('')}
+      </div>
+    </div>
+    <div class="chart-wrap"><canvas id="nwChart"></canvas></div>
+  </div>
+
+  <div class="section-title" style="margin-top:26px;">Financial snapshot</div>
+  <div class="grid g6">
+    ${snap.map(s=>`
+      <div class="card card-tight">
+        ${iconChip(s.icon)}
+        <div class="stat-label" style="margin-top:12px;">${s.label}</div>
+        <div class="stat-value">${money(s.value)}</div>
+      </div>`).join('')}
+  </div>
+
+  <div class="grid g2" style="margin-top:20px;align-items:start;">
+    <div class="card">
+      <div class="card-title">Financial health<span class="pill gold">Informational</span></div>
+      <div style="display:flex;gap:22px;align-items:center;">
+        ${healthRing(D.health.score)}
+        <div style="flex:1;">
+          ${D.health.parts.slice(0,4).map(p=>healthItem(p)).join('')}
+        </div>
+      </div>
+      ${D.health.parts.slice(4).map(p=>healthItem(p)).join('')}
+      <div class="note">This score is an informational analytics measure, not regulated financial advice.</div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Your financial update <span class="pill neutral">Today</span></div>
+      <div class="grid g3">
+        ${D.whatChanged.map(c=>`
+          <div>
+            <div class="stat-label">${c.label}</div>
+            <div class="stat-delta ${dirClass(c.dir==='up'?1:-1)}">${c.dir==='up'?'↑':'↓'} ${c.delta}</div>
+          </div>`).join('')}
+      </div>
+      <div class="divider"></div>
+      <div class="card-title" style="margin-bottom:8px;">Upcoming</div>
+      <div class="hr-list">
+        ${D.upcoming.map(u=>`<div class="row-flex"><span style="color:var(--text-dim);">${u.text}</span><span class="mono" style="color:var(--text-faint);font-size:12px;">${u.date}</span></div>`).join('')}
+      </div>
+    </div>
+  </div>
+
+  <div class="section-title" style="margin-top:26px;">Financial timeline</div>
+  <div class="card">
+    ${D.timeline.map(t=>`
+      <div class="tl-item">
+        <div class="tl-dot"></div>
+        <div>
+          <div class="tl-date">${t.date} · ${t.tag}</div>
+          <div class="tl-text">${t.text}</div>
+        </div>
+      </div>`).join('')}
+  </div>
+  `;
+}
+function healthRing(score){
+  const r=40,c=2*Math.PI*r, off=c-(score/100)*c;
+  return `<div class="ring-wrap">
+    <svg width="96" height="96" viewBox="0 0 96 96">
+      <circle cx="48" cy="48" r="${r}" stroke="#ece7db" stroke-width="8" fill="none"/>
+      <circle cx="48" cy="48" r="${r}" stroke="#9c6b2e" stroke-width="8" fill="none" stroke-linecap="round"
+        stroke-dasharray="${c}" stroke-dashoffset="${off}"/>
+    </svg>
+    <div class="ring-center"><div class="num">${score}</div><div class="den">/ 100</div></div>
+  </div>`;
+}
+function healthItem(p){
+  return `<div class="health-item"><div class="name">${p.name}</div><div class="meter"><div style="width:${p.v}%"></div></div><div class="val">${p.v}</div></div>`;
+}
+
+function renderMyWealth(){
+  const tabs = [['balance','Balance sheet'],['accounts','Accounts']];
+  return `
+  ${pageHead('Command centre','My wealth','Everything you own and owe, and every account connected to Meridian, in one place.')}
+  <div class="tabs">${tabs.map(([id,label])=>`<button class="tab-btn ${state.wealthTab===id?'active':''}" data-wtab="${id}">${label}</button>`).join('')}</div>
+  ${state.wealthTab==='accounts' ? renderAccounts(true) : renderBalance(true)}
+  `;
+}
+
+function renderBalance(embedded){
+  const assets = [
+    {group:'Cash', items:[{n:'Current accounts',v:18400},{n:'Savings',v:65850}]},
+    {group:'Investments', items:[{n:'Stocks & Shares ISA',v:214300},{n:'General investment account',v:212540}]},
+    {group:'Pensions', items:[{n:'Workplace pension',v:280000},{n:'SIPP',v:120000},{n:'Personal pension',v:83530}]},
+    {group:'Property', items:[{n:'Main residence',v:620000}]},
+    {group:'Other assets', items:[{n:'Alternative & collectible assets',v:20000}]},
+  ];
+  const totalAssets = assets.reduce((s,g)=>s+g.items.reduce((a,i)=>a+i.v,0),0);
+  const liabilities = [{n:'Residential mortgage', v:350000}];
+  const totalLiab = liabilities.reduce((a,i)=>a+i.v,0);
+
+  return `
+  ${embedded?'':pageHead('Balance sheet','Complete financial balance sheet','An accounting-style view of everything you own and owe, aggregated across every connected account.')}
+
+  <div class="grid g3" style="margin-bottom:20px;">
+    <div class="card card-tight"><div class="stat-label">Total assets</div><div class="stat-value lg">${money(totalAssets)}</div></div>
+    <div class="card card-tight"><div class="stat-label">Total liabilities</div><div class="stat-value lg" style="color:var(--negative);">${money(-totalLiab)}</div></div>
+    <div class="card card-tight" style="border-color:var(--accent-line);"><div class="stat-label">Total net worth</div><div class="stat-value lg" style="color:var(--accent);">${money(totalAssets-totalLiab)}</div></div>
+  </div>
+
+  <div class="grid g2" style="align-items:start;">
+    <div class="card">
+      <div class="section-title">Assets</div>
+      ${assets.map(g=>`
+        <div style="margin-bottom:14px;">
+          <div class="stat-label" style="margin-bottom:6px;">${g.group}</div>
+          <div class="hr-list">
+            ${g.items.map(i=>`<div class="row-flex"><span>${i.n}</span><span class="mono">${money(i.v)}</span></div>`).join('')}
+          </div>
+        </div>`).join('')}
+    </div>
+    <div class="card">
+      <div class="section-title">Liabilities</div>
+      <div class="hr-list">
+        ${liabilities.map(i=>`<div class="row-flex"><span>${i.n}</span><span class="mono" style="color:var(--negative);">${money(-i.v)}</span></div>`).join('')}
+      </div>
+      <div class="divider"></div>
+      <div class="chart-wrap sm"><canvas id="allocDonutBalance"></canvas></div>
+      ${disclaimer('Balances shown combine connected accounts with manually entered and estimated values. Figures may lag real-time provider data by a few minutes.')}
+    </div>
+  </div>
+  `;
+}
+
+function renderAccounts(embedded){
+  return `
+  ${embedded?'':pageHead('Accounts & connections','Connect your financial life','Bring together banking, investments, pensions, insurance and property from any UK provider. You control which accounts are connected at all times.')}
+
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;flex-wrap:wrap;gap:12px;">
+    <div style="color:var(--text-dim);font-size:13px;">${D.connections.length} accounts connected across 8 providers</div>
+    <button class="btn primary">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+      Connect an account
+    </button>
+  </div>
+
+  <div class="grid g4" style="margin-bottom:26px;">
+    ${D.connections.map(c=>`
+      <div class="conn-card">
+        <div class="top">
+          <div class="provider-badge">${c.provider.slice(-1)}</div>
+          <span class="pill green">${statusRow('Connected','connected')}</span>
+        </div>
+        <div style="margin-top:12px;font-weight:600;font-size:13.5px;">${c.provider}</div>
+        <div style="color:var(--text-faint);font-size:11.5px;margin-top:2px;">${c.kind}</div>
+        <div class="divider" style="margin:12px 0;"></div>
+        <div style="font-size:11px;color:var(--text-faint);">Last updated<br><span style="color:var(--text-dim);">${c.updated}</span></div>
+        <div style="display:flex;gap:8px;margin-top:12px;">
+          <button class="btn ghost sm" style="flex:1;">Permissions</button>
+          <button class="btn ghost sm" style="flex:1;">Disconnect</button>
+        </div>
+      </div>`).join('')}
+  </div>
+
+  <div class="section-title">All accounts</div>
+  <div class="card">
+    <div class="table-scroll">
+    <table>
+      <thead><tr><th>Provider</th><th>Account</th><th>Type</th><th class="num">Balance</th><th class="num">Rate</th><th class="num">Updated</th></tr></thead>
+      <tbody>
+        ${D.accountsTable.map(a=>`
+          <tr>
+            <td>${a.provider}</td>
+            <td>${a.account}</td>
+            <td><span class="pill neutral">${a.type}</span></td>
+            <td class="num mono" style="${a.balance<0?'color:var(--negative)':''}">${money(a.balance)}</td>
+            <td class="num mono">${a.rate}</td>
+            <td class="num" style="color:var(--text-faint);font-size:12px;">${a.updated}</td>
+          </tr>`).join('')}
+      </tbody>
+    </table>
+    </div>
+  </div>
+  ${disclaimer('You control which financial information is connected. Prototype data shown here is entirely fictional and does not represent any real financial institution.')}
+  `;
+}
+
+function renderInvest(){
+  const total = D.holdings.reduce((s,h)=>s+h.value,0);
+  const gain = D.holdings.reduce((s,h)=>s+h.gain,0);
+  const gainPct = (gain/(total-gain)*100);
+  const tabs = ['overview','holdings','allocation','income','fees'];
+  const labels = {overview:'Overview',holdings:'Holdings',allocation:'Allocation',income:'Income',fees:'Fees'};
+
+  let body = '';
+  if(state.invTab==='overview'){
+    body = `
+    <div class="grid g2" style="align-items:start;">
+      <div class="card">
+        <div class="card-title">Performance</div>
+        <div class="chart-wrap sm"><canvas id="investPerfChart"></canvas></div>
+      </div>
+      <div class="card">
+        <div class="card-title">ISA allowance — tax year ${D.tax.year}</div>
+        <div class="grid g3" style="margin-bottom:10px;">
+          <div><div class="stat-label">Allowance</div><div class="stat-value" style="font-size:18px;">${money(D.isa.allowance)}</div></div>
+          <div><div class="stat-label">Used</div><div class="stat-value" style="font-size:18px;">${money(D.isa.used)}</div></div>
+          <div><div class="stat-label">Remaining</div><div class="stat-value" style="font-size:18px;color:var(--positive);">${money(D.isa.allowance-D.isa.used)}</div></div>
+        </div>
+        <div class="meter" style="height:8px;"><div style="width:${D.isa.used/D.isa.allowance*100}%"></div></div>
+        <div class="note">Covers Cash ISA, Stocks & Shares ISA, Lifetime ISA and Innovative Finance ISA combined. This is not personalised tax advice.</div>
+      </div>
+    </div>
+    <div class="section-title" style="margin-top:20px;">Bonds & fixed income</div>
+    <div class="grid g2" style="align-items:start;">
+      <div class="card">
+        <div class="table-scroll">
+        <table>
+          <thead><tr><th>Holding</th><th class="num">Face value</th><th class="num">Value</th><th class="num">Coupon</th><th class="num">Yield</th></tr></thead>
+          <tbody>${D.bonds.map(b=>`<tr><td>${b.name}</td><td class="num mono">${money(b.face)}</td><td class="num mono">${money(b.value)}</td><td class="num mono">${b.coupon}</td><td class="num mono">${b.yield}</td></tr>`).join('')}</tbody>
+        </table>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">Maturity timeline</div>
+        <div class="chart-wrap xs"><canvas id="maturityChart"></canvas></div>
+      </div>
+    </div>`;
+  } else if(state.invTab==='holdings'){
+    body = `
+    <div class="card">
+      <div class="table-scroll">
+      <table>
+        <thead><tr><th>Holding</th><th>Type</th><th>Region</th><th>Provider</th><th class="num">Value</th><th class="num">Gain</th><th class="num">Return</th></tr></thead>
+        <tbody>
+          ${D.holdings.slice().sort((a,b)=>b.value-a.value).map(h=>`
+            <tr>
+              <td style="font-weight:600;">${h.name}</td>
+              <td><span class="pill neutral">${h.type}</span></td>
+              <td style="color:var(--text-dim);">${h.region}</td>
+              <td style="color:var(--text-faint);font-size:12px;">${h.provider}</td>
+              <td class="num mono">${money(h.value)}</td>
+              <td class="num mono ${dirClass(h.gain)}">${money(h.gain)}</td>
+              <td class="num mono ${dirClass(h.ret)}">${pctStr(h.ret)}</td>
+            </tr>`).join('')}
+        </tbody>
+      </table>
+      </div>
+    </div>`;
+  } else if(state.invTab==='allocation'){
+    body = `
+    <div class="grid g2" style="align-items:start;">
+      <div class="card"><div class="card-title">Allocation by asset class</div><div class="chart-wrap"><canvas id="allocChart"></canvas></div></div>
+      <div class="card">
+        <div class="card-title">Breakdown</div>
+        <div class="hr-list">
+          ${D.allocation.map(a=>`<div class="row-flex"><span style="display:flex;align-items:center;gap:8px;"><span style="width:9px;height:9px;border-radius:50%;background:${a.color};display:inline-block;"></span>${a.label}</span><span class="mono">${a.v}%</span></div>`).join('')}
+        </div>
+      </div>
+    </div>`;
+  } else if(state.invTab==='income'){
+    const totalIncome = D.holdings.length*0+3860;
+    body = `
+    <div class="grid g3" style="margin-bottom:20px;">
+      <div class="card card-tight"><div class="stat-label">Estimated annual income</div><div class="stat-value">${money(totalIncome)}</div></div>
+      <div class="card card-tight"><div class="stat-label">Portfolio yield</div><div class="stat-value">2.1%</div></div>
+      <div class="card card-tight"><div class="stat-label">Income this quarter</div><div class="stat-value">${money(1180)}</div></div>
+    </div>
+    <div class="card"><div class="card-title">Income-producing holdings</div>
+      <div class="hr-list">
+        ${D.holdings.filter(h=>['ETF','Fund','Gilt','Bond fund','REIT'].includes(h.type)).map(h=>`<div class="row-flex"><span>${h.name}</span><span class="mono">~${(h.value*0.018).toFixed(0)>0?'£'+Math.round(h.value*0.018).toLocaleString():'—'}/yr</span></div>`).join('')}
+      </div>
+    </div>`;
+  } else if(state.invTab==='fees'){
+    body = `
+    <div class="section-title">What am I paying?</div>
+    <div class="card">
+      <div class="table-scroll">
+      <table>
+        <thead><tr><th>Fund / ETF</th><th class="num">Fund charge</th><th class="num">Platform fee</th><th>Income</th><th>Risk</th></tr></thead>
+        <tbody>${D.funds.map(f=>`<tr><td>${f.name}</td><td class="num mono">${f.charge}</td><td class="num mono">${f.platform}</td><td>${f.income}</td><td><span class="pill neutral">${f.risk}</span></td></tr>`).join('')}</tbody>
+      </table>
+      </div>
+      <div class="divider"></div>
+      <div class="row-flex"><span style="font-weight:600;">Estimated annual cost across portfolio</span><span class="mono" style="font-weight:600;">£1,940 / yr (0.45%)</span></div>
+      <div style="display:flex;gap:10px;margin-top:14px;">
+        <button class="btn ghost sm">Compare</button>
+        <button class="btn ghost sm">Explore alternatives</button>
+        <button class="btn primary sm">Speak to an adviser</button>
+      </div>
+    </div>`;
+  }
+
+  return `
+  ${pageHead('Wealth','Investments')}
+  <div class="grid g3" style="margin-bottom:22px;">
+    <div class="card card-tight"><div class="stat-label">Total investments</div><div class="stat-value lg">${money(total)}</div></div>
+    <div class="card card-tight"><div class="stat-label">Total gain</div><div class="stat-value lg up">${money(gain)}</div></div>
+    <div class="card card-tight"><div class="stat-label">Return</div><div class="stat-value lg up">${pctStr(gainPct)}</div></div>
+  </div>
+  <div class="tabs">${tabs.map(t=>`<button class="tab-btn ${state.invTab===t?'active':''}" data-tab="${t}">${labels[t]}</button>`).join('')}</div>
+  ${body}
+  `;
+}
+
+function renderPension(){
+  const p = D.pensions;
+  return `
+  ${pageHead('Wealth','Pension command centre')}
+  <div class="grid g4" style="margin-bottom:22px;">
+    <div class="card card-tight" style="grid-column:span 1;"><div class="stat-label">Total pension wealth</div><div class="stat-value lg">${money(p.total)}</div></div>
+    ${p.parts.map(x=>`<div class="card card-tight"><div class="stat-label">${x.label}</div><div class="stat-value">${money(x.value)}</div></div>`).join('')}
+  </div>
+
+  <div class="grid g2" style="align-items:start;margin-bottom:22px;">
+    <div class="card">
+      <div class="card-title">State Pension ${statusRow('Estimated','estimated')}</div>
+      <div class="stat-value lg">£${p.statePension.weekly}<span style="font-size:13px;color:var(--text-faint);"> / week</span></div>
+      <div class="stat-delta flat">From age ${p.statePension.age} · based on available National Insurance record data</div>
+    </div>
+    <div class="card">
+      <div class="card-title">Contributions this tax year</div>
+      <div class="row-flex"><span>Employee contributions</span><span class="mono">${money(9600)}</span></div>
+      <div class="row-flex"><span>Employer contributions</span><span class="mono">${money(15400)}</span></div>
+      <div class="divider"></div>
+      <div class="row-flex" style="font-weight:600;"><span>Total</span><span class="mono">${money(25000)}</span></div>
+    </div>
+  </div>
+
+  <div class="section-title">Retirement simulator</div>
+  <div class="card">
+    <div class="grid g4" id="retirementInputs" style="margin-bottom:18px;">
+      ${retInput('Current age','curAge',D.user.age,20,70)}
+      ${retInput('Retirement age','retAge',65,50,75)}
+      ${retInput('Monthly contribution (£)','monthlyContrib',1250,0,5000,50)}
+      ${retInput('Employer contribution (£)','employerContrib',600,0,3000,50)}
+    </div>
+    <div class="grid g3" id="retirementOutputs"></div>
+    <div class="chart-wrap sm" style="margin-top:16px;"><canvas id="retChart"></canvas></div>
+    ${disclaimer('Illustrative projection based on the assumptions above (5% growth, 2.5% inflation). Not a guarantee or personalised financial advice — actual outcomes will differ.')}
+  </div>
+  `;
+}
+function retInput(label,id,val,min,max,step=1){
+  return `<div>
+    <div class="stat-label" style="margin-bottom:6px;">${label}</div>
+    <input type="number" id="${id}" value="${val}" min="${min}" max="${max}" step="${step}"
+      style="width:100%;background:var(--panel-2);border:1px solid var(--border-soft);border-radius:8px;padding:8px 10px;color:var(--text);font-family:'IBM Plex Mono',monospace;font-size:13px;">
+  </div>`;
+}
+
+function renderCash(){
+  const total = D.cashAccounts.reduce((s,a)=>s+a.balance,0);
+  const annualInterest = D.cashAccounts.reduce((s,a)=>s+a.balance*(parseFloat(a.rate)/100),0);
+  return `
+  ${pageHead('Wealth','Cash command centre')}
+  <div class="grid g3" style="margin-bottom:22px;">
+    <div class="card card-tight"><div class="stat-label">Total cash</div><div class="stat-value lg">${money(total)}</div></div>
+    <div class="card card-tight"><div class="stat-label">Estimated annual interest</div><div class="stat-value lg up">${money(annualInterest)}</div></div>
+    <div class="card card-tight"><div class="stat-label">Blended rate</div><div class="stat-value lg">${(annualInterest/total*100).toFixed(2)}%</div></div>
+  </div>
+  <div class="grid g2" style="align-items:start;">
+    <div class="card">
+      <div class="card-title">Accounts</div>
+      <div class="table-scroll">
+      <table>
+        <thead><tr><th>Account</th><th>Provider</th><th class="num">Balance</th><th class="num">Rate</th><th>Maturity</th></tr></thead>
+        <tbody>${D.cashAccounts.map(a=>`<tr><td>${a.name}</td><td style="color:var(--text-faint);font-size:12px;">${a.provider}</td><td class="num mono">${money(a.balance)}</td><td class="num mono">${a.rate}</td><td>${a.maturity}</td></tr>`).join('')}</tbody>
+      </table>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">Savings maturity timeline</div>
+      <div class="chart-wrap sm"><canvas id="cashMaturityChart"></canvas></div>
+      <div class="note">Only the 1-year fixed term has a maturity date. Notice and easy-access accounts have none.</div>
+    </div>
+  </div>
+  `;
+}
+
+function renderProperty(){
+  const p = D.property;
+  return `
+  ${pageHead('Wealth','Property portfolio')}
+  <div class="card" style="margin-bottom:20px;">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:16px;">
+      <div>
+        <div class="pill blue" style="margin-bottom:8px;">${p.type}</div>
+        <div class="stat-value lg">${money(p.value)}</div>
+        ${statusRow('Estimated valuation','estimated')}
+      </div>
+      <div style="display:flex;gap:28px;">
+        <div><div class="stat-label">Mortgage</div><div class="stat-value" style="font-size:19px;color:var(--negative);">${money(-p.mortgage)}</div></div>
+        <div><div class="stat-label">Equity</div><div class="stat-value" style="font-size:19px;color:var(--positive);">${money(p.equity)}</div></div>
+      </div>
+    </div>
+    <div class="divider"></div>
+    <div class="grid g4">
+      <div><div class="stat-label">Interest rate</div><div class="stat-value" style="font-size:16px;">${p.rate}</div></div>
+      <div><div class="stat-label">Term remaining</div><div class="stat-value" style="font-size:16px;">${p.term}</div></div>
+      <div><div class="stat-label">Monthly payment</div><div class="stat-value" style="font-size:16px;">${money(1890)}</div></div>
+      <div><div class="stat-label">Loan-to-value</div><div class="stat-value" style="font-size:16px;">${(p.mortgage/p.value*100).toFixed(0)}%</div></div>
+    </div>
+  </div>
+  <button class="btn ghost sm">+ Add another property</button>
+  ${disclaimer('Property values are estimated from available market data unless manually entered. Manually entered values are clearly marked and may not reflect a formal valuation.')}
+  `;
+}
+
+function renderDebt(){
+  const d = D.debt;
+  return `
+  ${pageHead('Obligations','Debt centre')}
+  <div class="grid g4" style="margin-bottom:22px;">
+    <div class="card card-tight"><div class="stat-label">Total debt</div><div class="stat-value lg" style="color:var(--negative);">${money(-d.total)}</div></div>
+    <div class="card card-tight"><div class="stat-label">Monthly payments</div><div class="stat-value lg">${money(d.monthly)}</div></div>
+    <div class="card card-tight"><div class="stat-label">Weighted avg. rate</div><div class="stat-value lg">${d.avgRate}%</div></div>
+    <div class="card card-tight"><div class="stat-label">Projected debt-free</div><div class="stat-value lg">${d.freeDate}</div></div>
+  </div>
+  <div class="grid g2" style="align-items:start;">
+    <div class="card">
+      <div class="card-title">Debts</div>
+      <div class="table-scroll">
+      <table>
+        <thead><tr><th>Debt</th><th class="num">Balance</th><th class="num">Rate</th><th class="num">Payment</th></tr></thead>
+        <tbody>${d.items.map(i=>`<tr><td>${i.name}</td><td class="num mono">${money(-i.balance)}</td><td class="num mono">${i.rate}</td><td class="num mono">${money(i.payment)}</td></tr>`).join('')}</tbody>
+      </table>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">Debt payoff timeline</div>
+      <div class="chart-wrap sm"><canvas id="debtChart"></canvas></div>
+    </div>
+  </div>
+  `;
+}
+
+function renderProtection(){
+  const ins = D.insurance;
+  return `
+  ${pageHead('Obligations','Protection centre')}
+  <div class="grid g2" style="margin-bottom:22px;">
+    <div class="card card-tight"><div class="stat-label">Total annual premiums</div><div class="stat-value lg">${money(ins.totalPremium)}</div></div>
+    <div class="card card-tight"><div class="stat-label">Total life cover</div><div class="stat-value lg">${money(ins.totalLifeCover)}</div></div>
+  </div>
+  <div class="card">
+    <div class="card-title">Policies</div>
+    <div class="table-scroll">
+    <table>
+      <thead><tr><th>Type</th><th>Provider</th><th class="num">Annual premium</th><th>Coverage</th><th>Renewal</th></tr></thead>
+      <tbody>
+        ${ins.policies.map(p=>`
+          <tr><td style="font-weight:600;">${p.type}</td><td style="color:var(--text-faint);font-size:12px;">${p.provider}</td><td class="num mono">${money(p.premium)}</td><td>${p.cover}</td><td class="mono" style="font-size:12px;color:var(--text-dim);">${p.renewal}</td></tr>`).join('')}
+      </tbody>
+    </table>
+    </div>
+    <div class="divider"></div>
+    <div style="display:flex;gap:10px;">
+      <button class="btn ghost sm">Review your protection</button>
+      <button class="btn primary sm">Speak to a qualified adviser</button>
+    </div>
+  </div>
+  `;
+}
+
+function renderTax(){
+  const t = D.tax;
+  return `
+  ${pageHead('Obligations',`Tax centre — ${t.year}`)}
+  <div class="grid g4" style="margin-bottom:22px;">
+    <div class="card card-tight"><div class="stat-label">Employment income</div><div class="stat-value lg">${money(t.income)}</div></div>
+    <div class="card card-tight"><div class="stat-label">Interest</div><div class="stat-value lg">${money(t.interest)}</div></div>
+    <div class="card card-tight"><div class="stat-label">Dividends</div><div class="stat-value lg">${money(t.dividends)}</div></div>
+    <div class="card card-tight"><div class="stat-label">Capital gains</div><div class="stat-value lg">${money(t.gains)}</div></div>
+  </div>
+  <div class="grid g2" style="align-items:start;">
+    <div class="card">
+      <div class="card-title">Income by month</div>
+      <div class="chart-wrap sm"><canvas id="taxIncomeChart"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Contributions</div>
+      <div class="row-flex"><span>Pension contributions</span><span class="mono">${money(t.pensionContrib)}</span></div>
+      <div class="row-flex"><span>ISA contributions</span><span class="mono">${money(t.isaContrib)}</span></div>
+      <div class="divider"></div>
+      <div class="row-flex"><span>Monthly income</span><span class="mono">${money(D.cashflow.monthlyIncome)}</span></div>
+      <div class="row-flex"><span>Monthly spending</span><span class="mono">${money(D.cashflow.monthlySpend)}</span></div>
+      <div class="row-flex" style="font-weight:600;"><span>Monthly surplus</span><span class="mono up">${money(D.cashflow.monthlyIncome-D.cashflow.monthlySpend)}</span></div>
+    </div>
+  </div>
+  <div class="section-title" style="margin-top:20px;">Spending breakdown</div>
+  <div class="card"><div class="chart-wrap sm"><canvas id="spendChart"></canvas></div></div>
+  ${disclaimer('Tax information — not tax advice. Figures are drawn from connected accounts and estimates, and should be verified with HMRC or a qualified tax adviser before filing.')}
+  `;
+}
+
+function renderGoals(){
+  return `
+  ${pageHead('Planning','Goals','Track progress toward the outcomes that matter, with an illustrative projected date and the contribution needed to stay on pace.')}
+  <div class="grid g2">
+    ${D.goals.map(g=>{
+      const pct = Math.min(100, Math.round(g.current/g.target*100));
+      return `
+      <div class="card">
+        <div class="row-flex" style="padding-top:0;">
+          <span style="font-weight:600;font-size:14px;">${g.name}</span>
+          ${g.achieved?'<span class="pill green">Achieved</span>':'<span class="pill gold">In progress</span>'}
+        </div>
+        <div class="grid g2" style="margin:10px 0;">
+          <div><div class="stat-label">Current</div><div class="stat-value" style="font-size:17px;">${money(g.current)}</div></div>
+          <div><div class="stat-label">Target</div><div class="stat-value" style="font-size:17px;">${money(g.target)}</div></div>
+        </div>
+        <div class="meter" style="height:8px;"><div style="width:${pct}%;${g.achieved?'':''}"></div></div>
+        <div class="row-flex">
+          <span style="color:var(--text-faint);font-size:11.5px;">${pct}% of target</span>
+          <span style="color:var(--text-faint);font-size:11.5px;">${g.projectedDate}</span>
+        </div>
+        ${g.monthly?`<div class="note">Requires an estimated ${money(g.monthly)}/month at current growth assumptions to stay on track.</div>`:''}
+        ${g.note?`<div class="note">${g.note}</div>`:''}
+      </div>`;
+    }).join('')}
+  </div>
+  <button class="btn ghost sm" style="margin-top:18px;">+ Add a goal</button>
+  ${disclaimer('Projected dates are illustrative, based on current pace and growth assumptions. Not a guarantee of future performance.')}
+  `;
+}
+
+const INSIGHTS_TABS = [
+  ['passport','Financial passport'],['xray','X-Ray'],['events','Life events'],
+  ['wealthgen','Wealth generation'],['calendar','Calendar'],['household','Household'],
+  ['equity','Employee equity'],['estate','Estate'],
+];
+
+function renderInsights(){
+  const fns = {
+    passport:insightsPassport, xray:insightsXray, events:insightsLifeEvents,
+    wealthgen:insightsWealthGen, calendar:insightsCalendar, household:insightsHousehold,
+    equity:insightsEquity, estate:insightsEstate,
+  };
+  return `
+  ${pageHead('Planning','Insights','Deeper analysis of how your financial life fits together — and how it might change.')}
+  <div class="tabs">${INSIGHTS_TABS.map(([id,label])=>`<button class="tab-btn ${state.insightsTab===id?'active':''}" data-itab="${id}">${label}</button>`).join('')}</div>
+  ${(fns[state.insightsTab]||insightsPassport)()}
+  `;
+}
+
+function insightsPassport(){
+  const liquid = D.snapshot[0].value + D.snapshot[1].value;
+  const invested = D.snapshot[1].value + D.snapshot[2].value;
+  const locked = D.snapshot[2].value;
+  const providers = new Set(D.connections.map(c=>c.provider));
+  const stats = [
+    ['Net worth', money(D.netWorth)], ['Liquid wealth', money(liquid)], ['Invested wealth', money(invested)],
+    ['Locked / retirement wealth', money(locked)], ['Property equity', money(D.property.equity)], ['Other assets', money(D.snapshot[4].value)],
+    ['Total liabilities', money(-D.debt.total)], ['Annual income', money(D.tax.income + D.tax.dividends + D.tax.interest)],
+    ['Annual spending', money(D.cashflow.monthlySpend*12)], ['Annual savings', money((D.cashflow.monthlyIncome-D.cashflow.monthlySpend)*12)],
+    ['Investment income', money(8420)], ['Pension contributions', money(D.tax.pensionContrib)],
+    ['Insurance coverage', money(D.insurance.totalLifeCover)],
+  ];
+  const counts = [
+    ['Connected institutions', providers.size], ['Accounts', D.accountsTable.length], ['Investments', D.holdings.length],
+    ['Pensions', D.pensions.parts.length], ['Insurance policies', D.insurance.policies.length], ['Properties', 1],
+    ['Liabilities', D.debt.items.length], ['Financial documents', D.documents.length],
+  ];
+  return `
+  <div class="grid g4" style="margin-bottom:22px;">
+    ${stats.map(([l,v])=>`<div class="card card-tight"><div class="stat-label">${l}</div><div class="stat-value" style="font-size:18px;">${v}</div></div>`).join('')}
+  </div>
+  <div class="section-title">Your financial identity, by the numbers</div>
+  <div class="card">
+    <div class="grid g4">
+      ${counts.map(([l,v])=>`<div style="text-align:center;padding:10px 0;"><div class="stat-value serif" style="font-size:26px;color:var(--accent);">${v}</div><div class="stat-label" style="margin-top:4px;">${l}</div></div>`).join('')}
+    </div>
+  </div>
+  `;
+}
+
+function insightsXray(){
+  return `
+  <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;">
+    <span class="pill gold">Analysis</span>
+    <span style="color:var(--text-dim);font-size:13px;">A structural read of your complete financial profile — not a recommendation to act.</span>
+  </div>
+  <div class="grid g2">
+    ${D.xray.map(x=>`
+      <div class="card card-tight">
+        <div class="stat-label">${x.label}</div>
+        <div style="font-size:13.5px;margin-top:8px;line-height:1.5;">${x.value}</div>
+      </div>`).join('')}
+  </div>
+  ${disclaimer('X-Ray highlights patterns in your data for informational purposes only. It does not tell you what to buy, sell, or change — speak to a regulated financial adviser for personalised recommendations.')}
+  `;
+}
+
+function insightsLifeEvents(){
+  const sel = D.lifeEvents.find(e=>e.id===state.lifeEventSelected);
+  return `
+  <div class="grid g3" style="margin-bottom:20px;">
+    ${D.lifeEvents.map(e=>`
+      <button class="conn-card" data-event="${e.id}" style="text-align:left;border-color:${state.lifeEventSelected===e.id?'var(--accent-line)':'var(--border-soft)'};cursor:pointer;">
+        ${iconChip(e.icon)}
+        <div style="margin-top:10px;font-weight:600;font-size:13.5px;">${e.name}</div>
+        <div style="color:var(--text-faint);font-size:11.5px;margin-top:3px;line-height:1.4;">${e.desc}</div>
+      </button>`).join('')}
+  </div>
+  ${sel ? lifeEventScenario(sel) : `<div class="card" style="text-align:center;color:var(--text-faint);padding:40px 20px;">Select a life event above to see a before / after scenario.</div>`}
+  `;
+}
+function lifeEventScenario(e){
+  const rows = [
+    ['Cash', D.snapshot[0].value, e.impact.cash],
+    ['Investments', D.snapshot[1].value, e.impact.investments],
+    ['Pension', D.snapshot[2].value, e.impact.pension],
+    ['Property', D.snapshot[3].value, e.impact.property],
+    ['Debt', -D.debt.total, -e.impact.debt],
+    ['Net worth', D.netWorth, e.impact.netWorth],
+  ];
+  return `
+  <div class="section-title">Modelling: ${e.name}</div>
+  <div class="card">
+    <div class="table-scroll">
+    <table>
+      <thead><tr><th>Category</th><th class="num">Before</th><th class="num">Change</th><th class="num">After</th></tr></thead>
+      <tbody>
+        ${rows.map(([label,before,delta])=>`
+          <tr><td>${label}${label==='Net worth'?' <span class="pill gold">Projection</span>':''}</td>
+          <td class="num mono">${money(before)}</td>
+          <td class="num mono ${dirClass(delta)}">${delta===0?'—':money(delta)}</td>
+          <td class="num mono" style="font-weight:600;">${money(before+delta)}</td></tr>`).join('')}
+      </tbody>
+    </table>
+    </div>
+  </div>
+  ${disclaimer('Illustrative scenario based on simplified assumptions. Actual impact depends on your specific circumstances — consider speaking to a regulated adviser before major life decisions.')}
+  `;
+}
+
+function insightsWealthGen(){
+  const wg = D.wealthGen;
+  return `
+  <div class="card">
+    <div class="card-title">How your wealth was created — last 12 months</div>
+    <div class="chart-wrap"><canvas id="waterfallChart"></canvas></div>
+  </div>
+  <div class="card" style="margin-top:16px;">
+    <div class="row-flex"><span>Starting wealth</span><span class="mono">${money(wg.start)}</span></div>
+    ${wg.steps.map(s=>`<div class="row-flex"><span>${s.value>=0?'+':'−'} ${s.label}</span><span class="mono ${dirClass(s.value)}">${money(Math.abs(s.value))}</span></div>`).join('')}
+    <div class="divider"></div>
+    <div class="row-flex" style="font-weight:600;"><span>Current wealth</span><span class="mono" style="color:var(--accent);">${money(wg.end)}</span></div>
+  </div>
+  `;
+}
+
+function insightsCalendar(){
+  const months = [[2026,7,'August 2026'],[2026,8,'September 2026']];
+  return `
+  <div class="grid g2" style="align-items:start;">
+    ${months.map(([y,m,label])=>monthCalendar(y,m,label)).join('')}
+  </div>
+  <div class="section-title" style="margin-top:22px;">All upcoming events</div>
+  <div class="card">
+    <div class="hr-list">
+      ${D.calendar.map(e=>`<div class="row-flex"><span>${e.text}</span><span style="display:flex;align-items:center;gap:8px;"><span class="pill neutral">${e.cat}</span><span class="mono" style="font-size:12px;color:var(--text-faint);">${fmtDate(e.date)}</span></span></div>`).join('')}
+    </div>
+  </div>
+  `;
+}
+function fmtDate(iso){
+  const d = new Date(iso+'T00:00:00');
+  return d.toLocaleDateString('en-GB', {day:'numeric', month:'short', year:'numeric'});
+}
+function monthCalendar(year, monthIdx, label){
+  const first = new Date(year, monthIdx, 1);
+  const startWeekday = (first.getDay()+6)%7; // Monday=0
+  const daysInMonth = new Date(year, monthIdx+1, 0).getDate();
+  const evByDay = {};
+  D.calendar.forEach(e=>{
+    const d = new Date(e.date+'T00:00:00');
+    if(d.getFullYear()===year && d.getMonth()===monthIdx) evByDay[d.getDate()] = (evByDay[d.getDate()]||[]).concat(e);
+  });
+  let cells = '';
+  for(let i=0;i<startWeekday;i++) cells += `<div class="cal-cell empty"></div>`;
+  for(let day=1;day<=daysInMonth;day++){
+    const has = evByDay[day];
+    cells += `<div class="cal-cell ${has?'has-event':''}" title="${has?has.map(e=>e.text).join(' · '):''}">
+      <span class="cal-day">${day}</span>${has?`<span class="cal-dot"></span>`:''}
+    </div>`;
+  }
+  return `
+  <div class="card">
+    <div class="card-title">${label}</div>
+    <div class="cal-grid">
+      ${['M','T','W','T','F','S','S'].map(d=>`<div class="cal-head">${d}</div>`).join('')}
+      ${cells}
+    </div>
+  </div>`;
+}
+
+function insightsHousehold(){
+  const h = D.household;
+  const combined = h.members.reduce((s,m)=>s+m.netWorth,0) + h.joint;
+  return `
+  <div class="grid g3" style="margin-bottom:20px;">
+    ${h.members.map(m=>`<div class="card card-tight"><div class="stat-label">${m.name} ${m.role!=='You'?`· ${m.role}`:''}</div><div class="stat-value" style="font-size:19px;">${money(m.netWorth)}</div><div class="status-row" style="margin-top:6px;">${m.access}</div></div>`).join('')}
+    <div class="card card-tight" style="border-color:var(--accent-line);"><div class="stat-label">Joint accounts</div><div class="stat-value" style="font-size:19px;">${money(h.joint)}</div></div>
+  </div>
+  <div class="card">
+    <div class="row-flex" style="font-weight:600;"><span>Combined household wealth</span><span class="mono" style="color:var(--accent);font-size:16px;">${money(combined)}</span></div>
+    <div class="divider"></div>
+    <div class="note">One person's private accounts are never exposed to another household member without explicit permission. Access levels: Personal · Shared · View only · Full access.</div>
+  </div>
+  `;
+}
+
+function insightsEquity(){
+  return `
+  <div class="grid g3" style="margin-bottom:20px;">
+    ${D.employeeEquity.map(e=>`
+      <div class="card card-tight">
+        <div class="stat-label">${e.type}</div>
+        <div class="stat-value" style="font-size:19px;">${money(e.vested+e.unvested)}</div>
+        <div class="row-flex" style="padding:6px 0;"><span style="font-size:12px;color:var(--text-faint);">Vested</span><span class="mono" style="font-size:12px;">${money(e.vested)}</span></div>
+        <div class="row-flex" style="padding:6px 0;"><span style="font-size:12px;color:var(--text-faint);">Unvested</span><span class="mono" style="font-size:12px;">${money(e.unvested)}</span></div>
+        <div class="note">Next vest ${e.nextVest} · ${e.concentration}</div>
+      </div>`).join('')}
+  </div>
+  <div class="section-title">Vesting timeline</div>
+  <div class="card">
+    ${D.employeeEquity.map(e=>`
+      <div class="tl-item">
+        <div class="tl-dot"></div>
+        <div><div class="tl-date">${e.nextVest}</div><div class="tl-text">${e.shares} shares vest — ${e.type} (${e.price})</div></div>
+      </div>`).join('')}
+  </div>
+  ${disclaimer('Employer share concentration is tracked separately as part of your overall diversification profile.')}
+  `;
+}
+
+function insightsEstate(){
+  const e = D.estate;
+  return `
+  <div class="grid g2" style="margin-bottom:20px;">
+    <div class="card card-tight"><div class="stat-label">Estate value</div><div class="stat-value lg">${money(e.estateValue)}</div></div>
+    <div class="card card-tight"><div class="stat-label">Will status</div><div class="stat-value" style="font-size:16px;">${e.willStatus}</div></div>
+  </div>
+  <div class="card">
+    <div class="card-title">Beneficiary records</div>
+    <div class="hr-list">
+      ${e.records.map(r=>`<div class="row-flex"><span>${r.item}</span><span class="mono" style="color:var(--text-dim);">${r.beneficiary}</span></div>`).join('')}
+    </div>
+    <div style="margin-top:14px;"><button class="btn ghost sm">Review with a qualified solicitor / adviser</button></div>
+  </div>
+  ${disclaimer('Estate information is provided for organisational purposes only and is not legal advice.')}
+  `;
+}
+
+function renderDocs(){
+  return `
+  ${pageHead('Records','Document vault','Every statement, policy and record in one searchable place.')}
+  <div class="search-box" style="max-width:100%;margin-bottom:20px;">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+    <input placeholder="Find my pension statement from 2025…" />
+  </div>
+  <div class="card">
+    <div class="hr-list">
+      ${D.documents.map(d=>`
+        <div class="row-flex">
+          <div class="left">
+            ${iconChip('docs')}
+            <div>
+              <div style="font-weight:600;font-size:13px;">${d.name}</div>
+              <div style="color:var(--text-faint);font-size:11.5px;">${d.cat} · ${d.date}</div>
+            </div>
+          </div>
+          <button class="btn ghost sm">Open</button>
+        </div>`).join('')}
+    </div>
+  </div>
+  `;
+}
+
+function renderAssistant(){
+  const personalPrompts = ['How much do I own?','Where is my money?','What are my largest holdings?','How much am I paying in fees?','How much of my wealth is liquid?','When could I potentially retire?','Show me everything that changed this month.'];
+  const marketPrompts = ['Show me the top performing UK funds this year.','Which funds have the lowest ongoing charges?','Show me the highest dividend-paying UK stocks.','Which pension funds track the S&P 500?','Show me global equity funds available through my pension.','What are the largest investment trusts?','What has performed best over five years?'];
+  const isMarket = state.chatMode==='market';
+  const prompts = isMarket ? marketPrompts : personalPrompts;
+  return `
+  ${pageHead('Records', isMarket?'Market intelligence AI':'Ask your financial life', isMarket?'Factual research across everything Meridian tracks — with source, data date and methodology on every answer.':'A conversational view across everything connected to Meridian.')}
+  <div class="mode-toggle">
+    <button class="${!isMarket?'active':''}" data-chatmode="personal">Personal assistant</button>
+    <button class="${isMarket?'active':''}" data-chatmode="market">Market intelligence</button>
+  </div>
+  <div class="chat-shell">
+    <div class="chat-log" id="chatLog">
+      ${isMarket
+        ? botMsg('gen','General information',"Ask me about stocks, funds, ETFs, bonds, pension funds, trusts or REITs — owned or not. I'll always show source, data date and methodology, and I'll flag when a question needs regulated advice instead of a ranking.")
+        : botMsg('gen','General information',"Hi Alex — I can answer questions using your connected data, run calculations, and build projections. I'll always label what kind of answer you're getting, and I'll point you to a regulated adviser for anything that needs one.")}
+    </div>
+    <div class="prompt-chips">${prompts.map(p=>`<button class="chip" data-prompt="${p}">${p}</button>`).join('')}</div>
+    <div class="chat-input-row">
+      <input id="chatInput" placeholder="${isMarket?'Ask about any stock, fund, ETF, bond, or pension fund…':'Ask me anything about your finances…'}" />
+      <button class="send-btn" id="sendBtn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg>
+      </button>
+    </div>
+  </div>
+  `;
+}
+function botMsg(tagKind,tagLabel,text){
+  return `<div class="msg bot"><div class="tag-row"><span class="tag ${tagKind}">${tagLabel}</span></div>${text}</div>`;
+}
+function userMsg(text){ return `<div class="msg user">${text}</div>`; }
+
+function marketChatAnswer(q){
+  const s = q.toLowerCase();
+  if(s.includes('lowest') && s.includes('charge')){
+    const top = instrumentsOfType('Fund').slice().sort((a,b)=>a.charge-b.charge).slice(0,3);
+    return botMsg('fact','Information', `Lowest ongoing charges among tracked funds: ${top.map(f=>`${f.name} (${f.charge.toFixed(2)}%)`).join(', ')}. Source: fund fact sheets · Data date: ${MARKET.updated}.`);
+  }
+  if(s.includes('top') && s.includes('uk fund')){
+    const top = instrumentsOfType('Fund').filter(f=>f.category && f.category.toLowerCase().includes('uk')).sort((a,b)=>b.y1-a.y1).slice(0,3);
+    return botMsg('fact','Information', `Top performing UK funds this year (1Y total return): ${top.map(f=>`${f.name} ${pctStr(f.y1)}`).join(', ')}. Methodology: 1-year total return, ranked highest first. Data date: ${MARKET.updated}.`);
+  }
+  if(s.includes('dividend') && s.includes('uk')){
+    const top = instrumentsOfType('Stock').filter(t=>t.region==='UK').sort((a,b)=>b.divYield-a.divYield).slice(0,3);
+    return botMsg('fact','Information', `Highest dividend-paying UK stocks tracked: ${top.map(t=>`${t.name} (${t.divYield.toFixed(1)}%)`).join(', ')}. Source: simulated prototype feed · Data date: ${MARKET.updated}.`);
+  }
+  if(s.includes('s&p 500') && s.includes('pension')){
+    return botMsg('fact','Information', `US Equity Pension Fund (Provider E) tracks US large-cap equity, similar in exposure to the S&P 500, and is available in your connected workplace pension.`);
+  }
+  if(s.includes('global equity') && s.includes('pension')){
+    const list = MARKET.pensionFunds.filter(p=>p.category==='Global equity');
+    return botMsg('fact','Information', `Global equity funds available through pension platforms: ${list.map(l=>l.name).join(', ')}.`);
+  }
+  if(s.includes('largest') && s.includes('trust')){
+    return botMsg('fact','Information', `Among tracked investment trusts, Global Growth Trust and UK Income & Growth Trust are the largest by NAV in this dataset. Source: simulated prototype feed.`);
+  }
+  if(s.includes('five year') || s.includes('5 year') || s.includes('5y')){
+    const top = MARKET.all.filter(i=>i.y5!=null).sort((a,b)=>b.y5-a.y5).slice(0,3);
+    return botMsg('fact','Information', `Best 5-year historical performers tracked: ${top.map(t=>`${t.name} ${pctStr(t.y5)}`).join(', ')}. Past performance is not a guide to future returns. Data date: ${MARKET.updated}.`);
+  }
+  if(s.includes('compare')){
+    return botMsg('calc','Analysis', `Add up to 5 products to your comparison tray using the checkbox on any row in Markets, then tap Compare to see facts side by side.`);
+  }
+  if(s.includes('india')){
+    return botMsg('fact','Information', `Emerging Markets Fund and Emerging Markets Pension Fund both include exposure to India as part of a broader emerging-markets allocation. This prototype doesn't break down country-level weightings further.`);
+  }
+  if(s.includes('should i buy') || s.includes('which one should i') || s.includes('best fund for me') || s.includes('recommend')){
+    return botMsg('advice','Personal financial advice needed', `This question may require personalised regulated investment advice, which takes your full circumstances into account. Speak to a regulated adviser.`);
+  }
+  return botMsg('gen','General information', `I can surface factual data on stocks, funds, ETFs, bonds, pension funds, trusts and REITs — owned or not. Try asking about top performers, charges, or dividend yields — I'll always show source, data date and methodology.`);
+}
+
+function renderNotifications(){
+  const kindClass = {gold:'gold',blue:'blue',green:'green',red:'red',neutral:'neutral'};
+  return `
+  ${pageHead('Records','Notifications')}
+  <div class="card"><div class="hr-list">
+    ${D.notifications.map(n=>`
+      <div class="row-flex">
+        <div class="left">${iconChip('overview')}<div><div style="font-size:13px;">${n.text}</div><div style="color:var(--text-faint);font-size:11.5px;margin-top:2px;">${n.time}</div></div></div>
+        <span class="pill ${kindClass[n.kind]}">•</span>
+      </div>`).join('')}
+  </div></div>
+  `;
+}
+
+function renderPrivacy(){
+  return `
+  ${pageHead('Records','Security & data',"You control your financial data — what's connected, what's shared, and for how long.")}
+  <div class="card">
+    <div class="table-scroll">
+    <table>
+      <thead><tr><th>Provider</th><th>Data accessed</th><th>Last refresh</th><th>Permission</th><th></th></tr></thead>
+      <tbody>
+        ${D.connections.map(c=>`
+          <tr><td>${c.provider}</td><td style="color:var(--text-dim);">${c.kind}</td><td class="mono" style="font-size:12px;">${c.updated}</td><td><span class="pill green">Read-only</span></td>
+          <td class="num"><button class="btn ghost sm">Manage</button></td></tr>`).join('')}
+      </tbody>
+    </table>
+    </div>
+  </div>
+  ${disclaimer('Meridian never has the ability to move money or place trades on your behalf. All access is read-only unless you explicitly authorise an action.')}
+  `;
+}
+
+function renderProfile(){
+  return `
+  ${pageHead('Account','Alex Morgan')}
+  <div class="card">
+    <div class="row-flex"><span>Age</span><span class="mono">${D.user.age}</span></div>
+    <div class="row-flex"><span>Annual salary</span><span class="mono">${money(D.user.salary)}</span></div>
+    <div class="row-flex"><span>Net worth</span><span class="mono">${money(D.netWorth)}</span></div>
+  </div>
+  <div class="note" style="margin-top:16px;">This is a fictional demo profile used to populate the Meridian prototype. No real personal or financial data is used.</div>
+  `;
+}
+
+/* ================================================================
+   MARKETS & PRODUCTS INTELLIGENCE — rendering engine
+   ================================================================ */
+function col(label, get, opts={}){ return {label, get, ...opts}; }
+const COLS = {
+  Stock:[
+    col('Name', i=>`<div style="font-weight:600;">${i.name}</div><div style="color:var(--text-faint);font-size:11px;">${i.ticker} · ${i.region}</div>`),
+    col('Sector', i=>i.sector),
+    col('Price', i=>'£'+i.price.toFixed(2), {num:true,mono:true}),
+    col('Day', i=>pctStr(i.day), {num:true,mono:true,cls:i=>dirClass(i.day)}),
+    col('YTD', i=>pctStr(i.ytd), {num:true,mono:true,cls:i=>dirClass(i.ytd)}),
+    col('Mkt cap', i=>i.marketCap, {num:true,mono:true}),
+    col('P/E', i=>i.pe.toFixed(1), {num:true,mono:true}),
+    col('Div yield', i=>i.divYield.toFixed(1)+'%', {num:true,mono:true}),
+  ],
+  Fund:[
+    col('Name', i=>`<div style="font-weight:600;">${i.name}</div><div style="color:var(--text-faint);font-size:11px;">${i.provider} · ${i.category}</div>`),
+    col('1Y', i=>pctStr(i.y1), {num:true,mono:true,cls:i=>dirClass(i.y1)}),
+    col('3Y', i=>pctStr(i.y3), {num:true,mono:true,cls:i=>dirClass(i.y3)}),
+    col('5Y', i=>pctStr(i.y5), {num:true,mono:true,cls:i=>dirClass(i.y5)}),
+    col('Charge', i=>i.charge.toFixed(2)+'%', {num:true,mono:true}),
+    col('Risk', i=>i.risk, {num:true}),
+  ],
+  ETF:[
+    col('Name', i=>`<div style="font-weight:600;">${i.name}</div><div style="color:var(--text-faint);font-size:11px;">${i.provider} · ${i.ticker}</div>`),
+    col('AUM', i=>i.aum, {num:true,mono:true}),
+    col('Charge', i=>i.charge.toFixed(2)+'%', {num:true,mono:true}),
+    col('1Y', i=>pctStr(i.y1), {num:true,mono:true,cls:i=>dirClass(i.y1)}),
+    col('3Y', i=>pctStr(i.y3), {num:true,mono:true,cls:i=>dirClass(i.y3)}),
+    col('Div yield', i=>i.divYield.toFixed(1)+'%', {num:true,mono:true}),
+  ],
+  Bond:[
+    col('Name', i=>`<div style="font-weight:600;">${i.name}</div><div style="color:var(--text-faint);font-size:11px;">${i.issuer}</div>`),
+    col('Coupon', i=>i.coupon.toFixed(2)+'%', {num:true,mono:true}),
+    col('Yield', i=>i.yield.toFixed(1)+'%', {num:true,mono:true}),
+    col('Maturity', i=>i.maturity, {num:true,mono:true}),
+    col('Rating', i=>i.rating, {num:true}),
+  ],
+  'Pension fund':[
+    col('Name', i=>`<div style="font-weight:600;">${i.name}</div><div style="color:var(--text-faint);font-size:11px;">${i.provider} · ${i.category}</div>`),
+    col('1Y', i=>pctStr(i.y1), {num:true,mono:true,cls:i=>dirClass(i.y1)}),
+    col('3Y', i=>pctStr(i.y3), {num:true,mono:true,cls:i=>dirClass(i.y3)}),
+    col('Charge', i=>i.charge.toFixed(2)+'%', {num:true,mono:true}),
+    col('In my pension?', i=>i.availableInMyPension?'<span class="pill green">Yes</span>':'<span class="pill neutral">No</span>', {num:true}),
+  ],
+  'Investment trust':[
+    col('Name', i=>`<div style="font-weight:600;">${i.name}</div><div style="color:var(--text-faint);font-size:11px;">${i.sector}</div>`),
+    col('NAV', i=>'£'+i.nav, {num:true,mono:true}),
+    col('Price', i=>'£'+i.price, {num:true,mono:true}),
+    col('Prem/Disc', i=>pctStr(i.premDisc), {num:true,mono:true,cls:i=>dirClass(-i.premDisc)}),
+    col('Dividend', i=>i.dividend.toFixed(1)+'%', {num:true,mono:true}),
+    col('1Y', i=>pctStr(i.y1), {num:true,mono:true,cls:i=>dirClass(i.y1)}),
+  ],
+  REIT:[
+    col('Name', i=>`<div style="font-weight:600;">${i.name}</div><div style="color:var(--text-faint);font-size:11px;">${i.sector} · ${i.geography}</div>`),
+    col('Yield', i=>i.yield.toFixed(1)+'%', {num:true,mono:true}),
+    col('1Y', i=>pctStr(i.y1), {num:true,mono:true,cls:i=>dirClass(i.y1)}),
+    col('NAV', i=>i.nav, {num:true,mono:true}),
+  ],
+};
+const TYPE_PLURAL = {Stock:'stocks', Fund:'funds', ETF:'ETFs', Bond:'bonds', 'Pension fund':'pension funds', 'Investment trust':'investment trusts', REIT:'REITs'};
+function instrumentsOfType(type){ return MARKET.all.filter(i=>i.type===type); }
+function isWatched(id){ return Object.values(MARKET.watchlists).some(list=>list.includes(id)); }
+function watchStarSVG(id){
+  return `<span class="watch-star ${isWatched(id)?'active':''}" data-star="${id}">${ICONS.star}</span>`;
+}
+function genericTable(list, type){
+  const cols = COLS[type] || COLS.Stock;
+  if(!list.length) return `<div style="text-align:center;color:var(--text-faint);padding:30px;">No matches.</div>`;
+  return `
+  <div class="table-scroll">
+  <table>
+    <thead><tr><th></th><th></th>${cols.map(c=>`<th class="${c.num?'num':''}">${c.label}</th>`).join('')}</tr></thead>
+    <tbody>
+      ${list.map(i=>`
+        <tr class="asset-row" data-asset="${i.id}">
+          <td style="width:18px;"><input type="checkbox" class="cmp-check" data-cmp="${i.id}" ${state.compare.includes(i.id)?'checked':''}></td>
+          <td style="width:18px;">${watchStarSVG(i.id)}</td>
+          ${cols.map(c=>`<td class="${c.num?'num':''} ${c.mono?'mono':''} ${c.cls?c.cls(i):''}">${c.get(i)}</td>`).join('')}
+        </tr>`).join('')}
+    </tbody>
+  </table>
+  </div>`;
+}
+function marketTypeTab(type){
+  const all = instrumentsOfType(type);
+  let list = all;
+  if(state.marketFilter==='Owned') list = list.filter(i=>i.owned);
+  if(state.marketSearch) list = list.filter(i=>i.name.toLowerCase().includes(state.marketSearch.toLowerCase()) || (i.ticker&&i.ticker.toLowerCase().includes(state.marketSearch.toLowerCase())));
+  const plural = TYPE_PLURAL[type] || type+'s';
+  const ownedCount = all.filter(i=>i.owned).length;
+  return `
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:10px;">
+    <div style="color:var(--text-dim);font-size:13px;"><strong>${all.length}</strong> supported ${plural} tracked · you own ${ownedCount}</div>
+    <div class="type-filter-row" style="margin:0;">
+      <button class="${state.marketFilter==='All'?'active':''}" data-mfilter="All">All ${plural}</button>
+      <button class="${state.marketFilter==='Owned'?'active':''}" data-mfilter="Owned">My ${plural} (${ownedCount})</button>
+    </div>
+  </div>
+  <div class="card">${genericTable(list, type)}</div>
+  `;
+}
+function assetMiniRow(i, field){
+  const v = i[field]!=null ? i[field] : (i.y1!=null?i.y1:0);
+  return `<div class="row-flex asset-row" data-asset="${i.id}" style="cursor:pointer;"><span>${i.name} <span style="color:var(--text-faint);font-size:11px;">· ${i.type}</span></span><span class="mono ${dirClass(v)}">${pctStr(v)}</span></div>`;
+}
+function marketDashboard(){
+  const withDay = MARKET.all.filter(i=>i.day!=null);
+  const gainers = withDay.slice().sort((a,b)=>b.day-a.day).slice(0,5);
+  const losers = withDay.slice().sort((a,b)=>a.day-b.day).slice(0,5);
+  const universeCards = [
+    ['Stocks','stocks',instrumentsOfType('Stock').length],
+    ['Funds','funds',instrumentsOfType('Fund').length],
+    ['ETFs','etfs',instrumentsOfType('ETF').length],
+    ['Bonds','bonds',instrumentsOfType('Bond').length],
+    ['Pension funds','pensionfunds',instrumentsOfType('Pension fund').length],
+    ['Investment trusts','trusts',instrumentsOfType('Investment trust').length],
+    ['REITs','reits',instrumentsOfType('REIT').length],
+  ];
+  return `
+  <div class="grid g4" style="margin-bottom:20px;">
+    ${universeCards.map(([label,tab,count])=>`
+      <button class="card card-tight" data-mtabnav="${tab}" style="text-align:left;cursor:pointer;">
+        <div class="stat-label">${label}</div>
+        <div class="stat-value" style="font-size:20px;">${count}</div>
+        <div style="color:var(--text-faint);font-size:11px;margin-top:4px;">supported</div>
+      </button>`).join('')}
+  </div>
+  <div class="grid g2" style="align-items:start;">
+    <div class="card">
+      <div class="card-title">Biggest gainers today <span class="pill neutral">All markets</span></div>
+      <div class="hr-list">${gainers.map(i=>assetMiniRow(i,'day')).join('')}</div>
+    </div>
+    <div class="card">
+      <div class="card-title">Biggest losers today <span class="pill neutral">All markets</span></div>
+      <div class="hr-list">${losers.map(i=>assetMiniRow(i,'day')).join('')}</div>
+    </div>
+  </div>
+  ${disclaimer('Market data shown is simulated for this prototype. A production version would use live or delayed data, clearly labelled with its source and last-updated time.')}
+  `;
+}
+function marketDiscover(){
+  const sections = [
+    ['Trending this week', MARKET.all.filter(i=>i.week!=null).slice().sort((a,b)=>b.week-a.week).slice(0,6)],
+    ['High dividend', MARKET.all.filter(i=>i.divYield||i.yield||i.dividend).slice().sort((a,b)=>(b.divYield||b.yield||b.dividend||0)-(a.divYield||a.yield||a.dividend||0)).slice(0,6)],
+    ['Low cost', MARKET.all.filter(i=>i.charge!=null).slice().sort((a,b)=>a.charge-b.charge).slice(0,6)],
+    ['Strongest 1Y performance', MARKET.all.filter(i=>i.y1!=null).slice().sort((a,b)=>b.y1-a.y1).slice(0,6)],
+  ];
+  return sections.map(([label,list])=>`
+    <div class="section-title">${label}</div>
+    <div class="discover-row" style="margin-bottom:22px;">
+      ${list.map(i=>`
+        <div class="discover-card asset-row" data-asset="${i.id}" style="cursor:pointer;">
+          <div class="pill neutral" style="margin-bottom:8px;">${i.type}</div>
+          <div style="font-weight:600;font-size:12.5px;line-height:1.3;">${i.name}</div>
+          <div class="mono ${dirClass(i.y1!=null?i.y1:(i.week||0))}" style="font-size:12px;margin-top:8px;">${pctStr(i.y1!=null?i.y1:(i.week||0))}</div>
+        </div>`).join('')}
+    </div>`).join('') + disclaimer('Discovery sections are informational groupings based on historical data. They do not imply suitability for you without an appropriate regulated advice process.');
+}
+function marketWatchlists(){
+  const names = Object.keys(MARKET.watchlists);
+  const active = MARKET.watchlists[state.watchlistActive] ? state.watchlistActive : names[0];
+  const ids = MARKET.watchlists[active] || [];
+  const items = ids.map(id=>MARKET.all.find(i=>i.id===id)).filter(Boolean);
+  return `
+  <div class="wl-tabs">${names.map(n=>`<button class="${active===n?'active':''}" data-wl="${n}">${n} (${MARKET.watchlists[n].length})</button>`).join('')}</div>
+  <div class="card">
+    ${items.length ? `<div class="hr-list">${items.map(i=>`
+      <div class="row-flex asset-row" data-asset="${i.id}" style="cursor:pointer;">
+        <span style="display:flex;align-items:center;gap:8px;">${watchStarSVG(i.id)}${i.name}</span>
+        <span class="mono ${dirClass(i.y1!=null?i.y1:(i.day||0))}">${pctStr(i.y1!=null?i.y1:(i.day||0))}</span>
+      </div>`).join('')}</div>` : `<div style="text-align:center;color:var(--text-faint);padding:30px;">No items in this watchlist yet. Use the star icon on any asset to add it.</div>`}
+  </div>
+  `;
+}
+function marketSearchBox(){
+  const q = state.marketSearch;
+  const results = q ? MARKET.all.filter(i=>i.name.toLowerCase().includes(q.toLowerCase()) || (i.ticker&&i.ticker.toLowerCase().includes(q.toLowerCase()))).slice(0,8) : [];
+  return `
+  <div class="market-search-wrap">
+    <div class="search-box" style="max-width:100%;">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+      <input id="marketSearchInput" placeholder="Search stocks, funds, ETFs, pensions, bonds…" value="${(q||'').replace(/"/g,'&quot;')}" />
+    </div>
+    ${results.length ? `<div class="market-results">${results.map(i=>`
+      <div class="market-result-row asset-row" data-asset="${i.id}">
+        <span>${i.name} <span style="color:var(--text-faint);">· ${i.type}</span></span>
+        <span class="pill neutral">${i.owned?'You own this':'Not held'}</span>
+      </div>`).join('')}</div>` : ''}
+  </div>`;
+}
+const MARKET_TABS = [['dashboard','Dashboard'],['stocks','Stocks'],['funds','Funds'],['etfs','ETFs'],['bonds','Bonds'],['pensionfunds','Pension funds'],['trusts','Trusts'],['reits','REITs'],['discover','Discover'],['watchlists','Watchlists']];
+const TYPE_BY_TAB = {stocks:'Stock', funds:'Fund', etfs:'ETF', bonds:'Bond', pensionfunds:'Pension fund', trusts:'Investment trust', reits:'REIT'};
+function renderMarkets(){
+  const tabFns = {dashboard:marketDashboard, discover:marketDiscover, watchlists:marketWatchlists};
+  const body = tabFns[state.marketTab] ? tabFns[state.marketTab]() : marketTypeTab(TYPE_BY_TAB[state.marketTab] || 'Stock');
+  return `
+  ${pageHead('Explore','Markets','Everything Meridian tracks — whether you own it or not. Research products, compare facts, and explore the wider market.')}
+  <div class="ticker-strip">
+    ${MARKET.indices.map(idx=>`
+      <div class="ticker-item">
+        <div class="ticker-name">${idx.name}</div>
+        <div class="ticker-value mono">${idx.value.toLocaleString('en-GB',{maximumFractionDigits:1})}</div>
+        <div class="ticker-delta ${dirClass(idx.day)}">${arrow(idx.day)} ${pctStr(idx.day)}</div>
+      </div>`).join('')}
+  </div>
+  ${marketSearchBox()}
+  <div class="tabs">${MARKET_TABS.map(([id,label])=>`<button class="tab-btn ${state.marketTab===id?'active':''}" data-mtabnav="${id}">${label}</button>`).join('')}</div>
+  ${body}
+  <div class="note" style="margin-top:18px;">Data last updated ${MARKET.updated} · Source: simulated prototype feed · Currency: GBP unless stated · Historical, not live.</div>
+  `;
+}
+
+/* ---------------- asset detail modal & compare engine ---------------- */
+function assetStat(label,val){
+  return `<div class="card card-tight"><div class="stat-label">${label}</div><div class="stat-value ${val!=null?dirClass(val):''}" style="font-size:17px;">${val!=null?pctStr(val):'—'}</div></div>`;
+}
+function rowKV(k,v){ return `<div class="row-flex"><span style="color:var(--text-faint);">${k}</span><span class="mono">${v}</span></div>`; }
+function assetModalHTML(id){
+  const i = MARKET.all.find(x=>x.id===id);
+  if(!i) return '';
+  const changeField = i.day!=null ? i.day : (i.y1!=null?i.y1:0);
+  return `
+  <div class="modal-overlay" id="overlayBg">
+    <div class="modal-sheet">
+      <div class="modal-head">
+        <div>
+          <div class="pill neutral" style="margin-bottom:8px;">${i.type}</div>
+          <div class="serif" style="font-size:20px;font-weight:500;">${i.name}</div>
+          ${i.price!=null?`<div class="mono" style="font-size:15px;margin-top:4px;">£${i.price.toFixed(2)} <span class="${dirClass(changeField)}" style="font-size:12px;">${pctStr(changeField)}</span></div>`:''}
+        </div>
+        <button class="modal-close" id="closeModalBtn">${ICONS.close}</button>
+      </div>
+      <div class="modal-body">
+        <div class="grid g3" style="margin-bottom:16px;">
+          ${assetStat('1Y', i.y1)}${assetStat('3Y', i.y3)}${assetStat('5Y', i.y5)}
+        </div>
+        <div class="card card-tight" style="margin-bottom:14px;">
+          <div class="card-title">Your exposure</div>
+          ${i.owned ? `<div class="stat-value" style="font-size:19px;color:var(--positive);">You own ${money(i.ownedValue||0)}</div>` : `<div style="color:var(--text-faint);font-size:13px;">Not currently held. This page stays fully accessible for research — you don't need to own an asset to explore it.</div>`}
+        </div>
+        <div class="hr-list">
+          ${i.provider?rowKV('Provider', i.provider):''}
+          ${i.isin?rowKV('ISIN', i.isin):''}
+          ${i.ticker?rowKV('Ticker', i.ticker):''}
+          ${i.sector?rowKV('Sector', i.sector):''}
+          ${i.region?rowKV('Region', i.region):''}
+          ${i.category?rowKV('Category', i.category):''}
+          ${i.charge!=null?rowKV('Ongoing charge', i.charge.toFixed(2)+'%'):''}
+          ${i.risk?rowKV('Risk indicator', i.risk):''}
+          ${i.size?rowKV('Fund size', i.size):''}
+          ${i.aum?rowKV('AUM', i.aum):''}
+          ${i.yield!=null?rowKV('Yield', i.yield.toFixed(1)+'%'):''}
+          ${i.divYield!=null?rowKV('Dividend yield', i.divYield.toFixed(1)+'%'):''}
+          ${i.coupon!=null?rowKV('Coupon', i.coupon.toFixed(2)+'%'):''}
+          ${i.maturity?rowKV('Maturity', i.maturity):''}
+          ${i.rating?rowKV('Credit rating', i.rating):''}
+          ${i.availableInMyPension!=null?rowKV('Available in my pension', i.availableInMyPension?'Yes':'Not currently'):''}
+        </div>
+        <div style="display:flex;gap:10px;margin-top:16px;flex-wrap:wrap;">
+          <button class="btn ghost sm" id="modalWatchBtn" data-star="${i.id}">${isWatched(i.id)?'★ On watchlist':'☆ Add to watchlist'}</button>
+          <button class="btn ghost sm" id="modalCompareBtn" data-cmp="${i.id}">${state.compare.includes(i.id)?'− Remove from compare':'+ Add to compare'}</button>
+        </div>
+        <div class="note">Data last updated ${MARKET.updated} · Historical performance is not a guide to future returns.</div>
+      </div>
+    </div>
+  </div>`;
+}
+function compareModalHTML(){
+  const items = state.compare.map(id=>MARKET.all.find(i=>i.id===id)).filter(Boolean).slice(0,5);
+  const rows = [
+    ['1Y return', i=>i.y1!=null?pctStr(i.y1):'—'],
+    ['5Y return', i=>i.y5!=null?pctStr(i.y5):'—'],
+    ['Charge', i=>i.charge!=null?i.charge.toFixed(2)+'%':'—'],
+    ['Risk', i=>i.risk||'—'],
+    ['Yield', i=>{const y=i.divYield!=null?i.divYield:(i.yield!=null?i.yield:(i.dividend!=null?i.dividend:null)); return y!=null?y.toFixed(1)+'%':'—';}],
+  ];
+  return `
+  <div class="modal-overlay" id="overlayBg">
+    <div class="modal-sheet" style="max-width:820px;">
+      <div class="modal-head">
+        <div><div class="pill gold" style="margin-bottom:8px;">Compare facts</div><div class="serif" style="font-size:20px;font-weight:500;">Comparing ${items.length} product${items.length===1?'':'s'}</div></div>
+        <button class="modal-close" id="closeModalBtn">${ICONS.close}</button>
+      </div>
+      <div class="modal-body">
+        ${items.length ? `
+        <div class="table-scroll">
+        <table>
+          <thead><tr><th></th>${items.map(i=>`<th>${i.name}</th>`).join('')}</tr></thead>
+          <tbody>${rows.map(([label,fn])=>`<tr><td style="color:var(--text-faint);">${label}</td>${items.map(i=>`<td class="mono">${fn(i)}</td>`).join('')}</tr>`).join('')}</tbody>
+        </table>
+        </div>
+        <button class="btn ghost sm" id="clearCompareBtn" style="margin-top:16px;">Clear comparison</button>
+        ` : `<div style="text-align:center;color:var(--text-faint);padding:20px;">Nothing selected yet — use the checkbox on any product row in Markets.</div>`}
+        ${disclaimer('This compares publicly available facts side by side. It is not a personalised recommendation of which product to choose.')}
+      </div>
+    </div>
+  </div>`;
+}
+function toggleWatch(id){
+  const list = MARKET.watchlists[state.watchlistActive] || (MARKET.watchlists[state.watchlistActive]=[]);
+  const idx = list.indexOf(id);
+  if(idx>-1) list.splice(idx,1); else list.push(id);
+}
+function toggleCompare(id){
+  const idx = state.compare.indexOf(id);
+  if(idx>-1) state.compare.splice(idx,1);
+  else if(state.compare.length<5) state.compare.push(id);
+}
+function openAsset(id){ state.assetModal=id; state.compareOpen=false; renderOverlay(); }
+function renderOverlay(){
+  const root = document.getElementById('modalRoot');
+  if(!root) return;
+  if(state.compareOpen) root.innerHTML = compareModalHTML();
+  else if(state.assetModal) root.innerHTML = assetModalHTML(state.assetModal);
+  else root.innerHTML = '';
+}
+function renderCompareTray(){
+  const el = document.getElementById('compareTray');
+  if(!el) return;
+  if(state.compare.length===0){ el.style.display='none'; el.innerHTML=''; return; }
+  el.style.display='flex';
+  el.innerHTML = `
+    <span style="font-size:12.5px;color:var(--text-dim);">${state.compare.length} selected</span>
+    <button class="btn ghost sm" id="trayClear">Clear</button>
+    <button class="btn primary sm" id="trayCompare">Compare</button>
+  `;
+}
+
+/* ---------------- router ---------------- */
+const RENDERERS = {
+  overview:renderOverview, mywealth:renderMyWealth, balance:renderMyWealth, accounts:renderMyWealth,
+  markets:renderMarkets, invest:renderInvest, pension:renderPension, cash:renderCash, property:renderProperty,
+  debt:renderDebt, protection:renderProtection, tax:renderTax, goals:renderGoals, insights:renderInsights,
+  docs:renderDocs, assistant:renderAssistant, notifications:renderNotifications, privacy:renderPrivacy, profile:renderProfile,
+};
+
+function renderMain(){
+  destroyCharts();
+  const fn = RENDERERS[state.section] || renderOverview;
+  document.getElementById('main').innerHTML = fn();
+  try{ wireSection(); }catch(e){ console.warn('wireSection error:', e); }
+  try{ initCharts(); }catch(e){ console.warn('initCharts error:', e); }
+  try{ renderCompareTray(); }catch(e){ console.warn('compare tray error:', e); }
+}
+
+/* ---------------- section-specific wiring ---------------- */
+function wireSection(){
+  if(state.section==='overview'){
+    const t = document.getElementById('periodToggle');
+    if(t) t.querySelectorAll('button').forEach(b=>b.onclick=()=>{state.period=b.dataset.p; renderMain();});
+  }
+  if(state.section==='invest'){
+    document.querySelectorAll('.tab-btn').forEach(b=>b.onclick=()=>{state.invTab=b.dataset.tab; renderMain();});
+  }
+  if(state.section==='pension'){
+    ['curAge','retAge','monthlyContrib','employerContrib'].forEach(id=>{
+      const el = document.getElementById(id);
+      if(el) el.oninput = updateRetirement;
+    });
+    updateRetirement();
+  }
+  if(state.section==='assistant'){
+    document.querySelectorAll('.chip').forEach(c=>c.onclick=()=>sendChat(c.dataset.prompt));
+    const btn = document.getElementById('sendBtn');
+    const input = document.getElementById('chatInput');
+    if(btn) btn.onclick=()=>{ if(input.value.trim()){ sendChat(input.value.trim()); input.value=''; } };
+    if(input) input.onkeydown=(e)=>{ if(e.key==='Enter' && input.value.trim()){ sendChat(input.value.trim()); input.value=''; } };
+  }
+  if(state.section==='markets'){
+    const msi = document.getElementById('marketSearchInput');
+    if(msi){
+      msi.oninput = (e)=>{
+        state.marketSearch = e.target.value;
+        renderMain();
+        const el = document.getElementById('marketSearchInput');
+        if(el){ el.focus(); const p = el.value.length; el.setSelectionRange(p,p); }
+      };
+    }
+  }
+}
+
+function chatAnswer(q){
+  const s = q.toLowerCase();
+  if(s.includes('own') || s.includes('worth')){
+    return botMsg('fact','Fact', `Your total net worth is <strong>${money(D.netWorth)}</strong>, combining cash, investments, pensions and property, minus liabilities. Retrieved from your connected accounts as of today.`);
+  }
+  if(s.includes('where is my money') || s.includes('largest holding')){
+    const top = D.holdings.slice().sort((a,b)=>b.value-a.value)[0];
+    return botMsg('fact','Fact', `Your largest single holding is <strong>${top.name}</strong> at ${money(top.value)}. Across all accounts, the biggest concentration is in ${D.snapshot[3].label.toLowerCase()} at ${money(D.snapshot[3].value)}.`);
+  }
+  if(s.includes('fee')){
+    return botMsg('calc','Calculation', `Based on your fund charges and platform fees, you're paying an estimated <strong>£1,940 a year (0.45%)</strong> across your investment portfolio.`);
+  }
+  if(s.includes('liquid')){
+    const liquid = D.snapshot[0].value + D.snapshot[1].value;
+    return botMsg('calc','Calculation', `Your liquid wealth — cash plus investments you could realistically access — is <strong>${money(liquid)}</strong>, or ${(liquid/D.netWorth*100).toFixed(0)}% of your net worth.`);
+  }
+  if(s.includes('retire')){
+    return botMsg('proj','Projection', `At your current contribution rate and a 5% growth assumption, your pension could reach roughly <strong>£1.1m by age 65</strong>. This is illustrative, based on assumptions, and not a guarantee — visit the Pensions page to adjust inputs.`);
+  }
+  if(s.includes('changed')){
+    return botMsg('fact','Fact', D.whatChanged.map(c=>`${c.label} ${c.dir==='up'?'↑':'↓'} ${c.delta}`).join(' · '));
+  }
+  if(s.includes('invest in') || s.includes('should i buy') || s.includes('sell')){
+    return botMsg('advice','Regulated advice needed', `I can't recommend specific investments to buy or sell. Speak to a regulated financial adviser for personalised advice tailored to your circumstances.`);
+  }
+  return botMsg('gen','General information', `Here's what I can tell you from your connected data — try one of the suggested questions below, or ask about a specific account, holding, or goal.`);
+}
+function sendChat(text){
+  const log = document.getElementById('chatLog');
+  log.insertAdjacentHTML('beforeend', userMsg(text));
+  const answer = state.chatMode==='market' ? marketChatAnswer(text) : chatAnswer(text);
+  log.insertAdjacentHTML('beforeend', answer);
+  log.scrollTop = log.scrollHeight;
+}
+
+function updateRetirement(){
+  const curAge = +document.getElementById('curAge').value || 42;
+  const retAge = +document.getElementById('retAge').value || 65;
+  const monthly = +document.getElementById('monthlyContrib').value || 0;
+  const employer = +document.getElementById('employerContrib').value || 0;
+  const years = Math.max(retAge-curAge,0);
+  const growth = 0.05, current = D.pensions.total;
+
+  function project(rate){
+    let pot = current;
+    const series=[pot];
+    for(let y=0;y<years;y++){
+      pot = pot*(1+rate) + (monthly+employer)*12;
+      series.push(Math.round(pot));
+    }
+    return series;
+  }
+  const cons = project(0.03), mod = project(0.05), high = project(0.07);
+  const finalMod = mod[mod.length-1];
+  const annualIncome = Math.round(finalMod*0.04);
+
+  document.getElementById('retirementOutputs').innerHTML = `
+    <div class="card card-tight"><div class="stat-label">Projected pot at ${retAge} (moderate)</div><div class="stat-value" style="font-size:20px;">${money(finalMod)}</div></div>
+    <div class="card card-tight"><div class="stat-label">Estimated annual income</div><div class="stat-value" style="font-size:20px;">${money(annualIncome)}</div></div>
+    <div class="card card-tight"><div class="stat-label">Years to retirement</div><div class="stat-value" style="font-size:20px;">${years}</div></div>
+  `;
+
+  if(charts.ret && charts.ret.destroy) { try{ charts.ret.destroy(); }catch(e){} }
+  const ctx = document.getElementById('retChart');
+  if(ctx){
+    charts.ret = newChart(ctx, {
+      type:'line',
+      data:{labels:cons.map((_,i)=>curAge+i), datasets:[
+        lineSet('Higher growth', high, '#9c6b2e', false),
+        lineSet('Moderate', mod, '#3f8f65', true),
+        lineSet('Conservative', cons, '#3f6fa8', false),
+      ]},
+      options: chartOpts({y:{ticks:{callback:v=>'£'+(v/1000).toFixed(0)+'k'}}}, true)
+    });
+  }
+}
+function lineSet(label,data,color,fill){
+  return {label,data,borderColor:color,backgroundColor:color+'22',fill:fill,tension:.35,pointRadius:0,borderWidth:2};
+}
+
+/* ---------------- chart helpers ---------------- */
+function chartOpts(scalesExtra={}, legend=false){
+  return {
+    responsive:true, maintainAspectRatio:false,
+    plugins:{legend:{display:legend, labels:{color:'#6b6659', font:{family:'Inter',size:11}, boxWidth:10}}, tooltip:{backgroundColor:'#f6f4ee', borderColor:'#ddd6c7', borderWidth:1, titleColor:'#211e17', bodyColor:'#211e17', padding:10}},
+    scales:{
+      x:{grid:{color:'#e8e3d7'}, ticks:{color:'#9c9686', font:{family:'IBM Plex Mono',size:10}}},
+      y:{grid:{color:'#e8e3d7'}, ticks:{color:'#9c9686', font:{family:'IBM Plex Mono',size:10}}, ...scalesExtra.y},
+    }
+  };
+}
+function initCharts(){
+  const s = state.section;
+  if(s==='overview'){
+    const data = D.nwSeries[state.period];
+    const labels = data.map((_,i)=>i+1);
+    const ctx = document.getElementById('nwChart');
+    if(ctx) charts.nw = newChart(ctx,{type:'line',data:{labels,datasets:[{data,borderColor:'#9c6b2e',backgroundColor:'#9c6b2e1a',fill:true,tension:.35,pointRadius:0,borderWidth:2.2}]},
+      options: chartOpts({y:{ticks:{callback:v=>'£'+v+'k'}}})});
+  }
+  if(s==='mywealth' && state.wealthTab==='balance'){
+    const ctx = document.getElementById('allocDonutBalance');
+    if(ctx) charts.bal = newChart(ctx,{type:'doughnut',data:{labels:['Cash','Investments','Pensions','Property','Other'],datasets:[{data:[84.25,426.84,483.53,620,20],backgroundColor:['#3f6fa8','#9c6b2e','#7a6bab','#3f8f65','#9c9686'],borderWidth:0}]},
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{color:'#6b6659',boxWidth:9,font:{size:10.5}}}}}});
+  }
+  if(s==='insights' && state.insightsTab==='wealthgen'){
+    const ctx = document.getElementById('waterfallChart');
+    if(ctx){
+      const wg = D.wealthGen;
+      let running = wg.start;
+      const labels=['Start']; const data=[[0,wg.start]]; const colors=['#9c9686'];
+      wg.steps.forEach(st=>{
+        const from=running; running+=st.value;
+        labels.push(st.label);
+        data.push([Math.min(from,running), Math.max(from,running)]);
+        colors.push(st.value>=0?'#3f8f65':'#b23f30');
+      });
+      labels.push('Current'); data.push([0,wg.end]); colors.push('#9c6b2e');
+      charts.waterfall = newChart(ctx,{type:'bar',data:{labels,datasets:[{data,backgroundColor:colors,borderRadius:4}]},
+        options: chartOpts({y:{ticks:{callback:v=>'£'+(v/1000).toFixed(0)+'k'}}})});
+    }
+  }
+  if(s==='invest'){
+    if(state.invTab==='overview'){
+      const ctx1=document.getElementById('investPerfChart');
+      if(ctx1) charts.perf = newChart(ctx1,{type:'line',data:{labels:['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug'],datasets:[{data:[388,395,401,398,410,415,421,426.8],borderColor:'#3f8f65',backgroundColor:'#3f8f6520',fill:true,tension:.35,pointRadius:0,borderWidth:2}]},
+        options:chartOpts({y:{ticks:{callback:v=>'£'+v+'k'}}})});
+      const ctx2=document.getElementById('maturityChart');
+      if(ctx2) charts.mat = newChart(ctx2,{type:'bar',data:{labels:D.bonds.map(b=>b.maturity),datasets:[{data:D.bonds.map(b=>b.value/1000),backgroundColor:'#9c6b2e',borderRadius:4}]},
+        options:chartOpts({y:{ticks:{callback:v=>'£'+v+'k'}}})});
+    }
+    if(state.invTab==='allocation'){
+      const ctx=document.getElementById('allocChart');
+      if(ctx) charts.alloc = newChart(ctx,{type:'doughnut',data:{labels:D.allocation.map(a=>a.label),datasets:[{data:D.allocation.map(a=>a.v),backgroundColor:D.allocation.map(a=>a.color),borderWidth:0}]},
+        options:{responsive:true,maintainAspectRatio:false,cutout:'62%',plugins:{legend:{position:'bottom',labels:{color:'#6b6659',boxWidth:9,font:{size:10.5}}}}}});
+    }
+  }
+  if(s==='cash'){
+    const ctx=document.getElementById('cashMaturityChart');
+    if(ctx) charts.cashMat = newChart(ctx,{type:'bar',data:{labels:D.cashAccounts.map(a=>a.name.split(' ').slice(0,2).join(' ')),datasets:[{data:D.cashAccounts.map(a=>a.balance/1000),backgroundColor:'#3f6fa8',borderRadius:4}]},
+      options:chartOpts({y:{ticks:{callback:v=>'£'+v+'k'}}})});
+  }
+  if(s==='debt'){
+    const ctx=document.getElementById('debtChart');
+    if(ctx) charts.debt = newChart(ctx,{type:'line',data:{labels:D.debt.timeline.map(t=>t.year),datasets:[{data:D.debt.timeline.map(t=>t.v/1000),borderColor:'#b23f30',backgroundColor:'#b23f3020',fill:true,tension:.3,pointRadius:3,borderWidth:2}]},
+      options:chartOpts({y:{ticks:{callback:v=>'£'+v+'k'}}})});
+  }
+  if(s==='tax'){
+    const ctx1=document.getElementById('taxIncomeChart');
+    if(ctx1) charts.taxInc = newChart(ctx1,{type:'bar',data:{labels:D.tax.monthlyIncome.map(m=>m.m),datasets:[{data:D.tax.monthlyIncome.map(m=>m.v),backgroundColor:'#9c6b2e',borderRadius:4}]},
+      options:chartOpts({y:{ticks:{callback:v=>'£'+(v/1000).toFixed(1)+'k'}}})});
+    const ctx2=document.getElementById('spendChart');
+    if(ctx2) charts.spend = newChart(ctx2,{type:'bar',data:{labels:D.cashflow.spend.map(s=>s.label),datasets:[{data:D.cashflow.spend.map(s=>s.v),backgroundColor:'#3f8f65',borderRadius:4}]},
+      options:{...chartOpts(),indexAxis:'y'}});
+  }
+}
+
+/* ---------------- global delegated interactions ---------------- */
+function handleGlobalClick(e){
+  const modalWatchBtn = e.target.closest('#modalWatchBtn');
+  if(modalWatchBtn){ toggleWatch(modalWatchBtn.dataset.star); renderOverlay(); return; }
+  const modalCompareBtn = e.target.closest('#modalCompareBtn');
+  if(modalCompareBtn){ toggleCompare(modalCompareBtn.dataset.cmp); renderOverlay(); renderCompareTray(); return; }
+  const starSpan = e.target.closest('.watch-star');
+  if(starSpan){ toggleWatch(starSpan.dataset.star); renderMain(); return; }
+  const cmpCheckbox = e.target.closest('.cmp-check');
+  if(cmpCheckbox){ toggleCompare(cmpCheckbox.dataset.cmp); renderMain(); return; }
+  const assetEl = e.target.closest('[data-asset]');
+  if(assetEl){ openAsset(assetEl.dataset.asset); return; }
+  const mtabnav = e.target.closest('[data-mtabnav]');
+  if(mtabnav){ state.marketTab = mtabnav.dataset.mtabnav; renderMain(); return; }
+  const mfilter = e.target.closest('[data-mfilter]');
+  if(mfilter){ state.marketFilter = mfilter.dataset.mfilter; renderMain(); return; }
+  const wtab = e.target.closest('[data-wtab]');
+  if(wtab){ state.wealthTab = wtab.dataset.wtab; renderMain(); return; }
+  const itab = e.target.closest('[data-itab]');
+  if(itab){ state.insightsTab = itab.dataset.itab; renderMain(); return; }
+  const evEl = e.target.closest('[data-event]');
+  if(evEl){ state.lifeEventSelected = evEl.dataset.event; renderMain(); return; }
+  const wlEl = e.target.closest('[data-wl]');
+  if(wlEl){ state.watchlistActive = wlEl.dataset.wl; renderMain(); return; }
+  const chatModeEl = e.target.closest('[data-chatmode]');
+  if(chatModeEl){ state.chatMode = chatModeEl.dataset.chatmode; renderMain(); return; }
+  const closeBtn = e.target.closest('#closeModalBtn');
+  if(closeBtn || e.target.id==='overlayBg'){ state.assetModal=null; state.compareOpen=false; renderOverlay(); return; }
+  if(e.target.id==='trayClear'){ state.compare=[]; renderMain(); return; }
+  if(e.target.id==='trayCompare'){ state.compareOpen=true; renderOverlay(); return; }
+  if(e.target.id==='clearCompareBtn'){ state.compare=[]; state.compareOpen=false; renderOverlay(); renderMain(); return; }
+}
+document.addEventListener('click', e=>{ try{ handleGlobalClick(e); }catch(err){ console.warn('global click error:', err); } });
+
+const globalSearchEl = document.getElementById('globalSearch');
+if(globalSearchEl){
+  globalSearchEl.addEventListener('keydown', e=>{
+    if(e.key==='Enter' && e.target.value.trim()){
+      state.marketSearch = e.target.value.trim();
+      go('markets');
+    }
+  });
+}
+
+/* ---------------- init ---------------- */
+try{
+  if(typeof Chart !== 'undefined'){ Chart.defaults.font.family = 'Inter'; }
+}catch(e){ console.warn('Chart.js defaults setup skipped:', e); }
+renderNav();
+renderMain();
+</script>
+</body>
+</html>
